@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardFolio — Tracker achat/revente cartes Pokémon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EAEEF6; --surface:#FFFFFF; --surface-2:#E4E9F4; --border:#D6DDEC;
+    --text:#161A2E; --text-2:#5B6178; --text-3:#8A90A6;
+    --accent:#6D4CE0; --accent-soft:#EEEAFB; --accent-text:#5636C4;
+    --blue:#3B6FF6; --blue-soft:#E3EAFF; --blue-text:#2A54D6;
+    --violet:#6D4CE0; --violet-soft:#EEEAFB; --violet-text:#5636C4;
+    --success:#12B76A; --success-soft:#E7F9F1;
+    --danger:#F04438; --danger-soft:#FEEBEA;
+    --warn:#F79009; --warn-soft:#FFF4E5;
+    --holo:linear-gradient(135deg, #6D4CE0, #3B6FF6);
+    --radius:16px;
+    --shadow:0 2px 10px rgba(40,50,90,0.07), 0 1px 2px rgba(40,50,90,0.05);
+    --shadow-md:0 10px 28px rgba(40,50,90,0.14);
+  }
+  [data-theme="dark"]{
+    --bg:#0C0E18; --surface:#161A29; --surface-2:#1E2335; --border:#2B3145;
+    --text:#F0F2FA; --text-2:#9AA0BC; --text-3:#6B7290;
+    --accent:#9B85FF; --accent-soft:#241D42; --accent-text:#B9A6FF;
+    --blue:#6C93FF; --blue-soft:#1C2748; --blue-text:#9BB4FF;
+    --violet:#9B85FF; --violet-soft:#241D42; --violet-text:#B9A6FF;
+    --success:#3ECF8E; --success-soft:#0F2A22;
+    --danger:#F97066; --danger-soft:#331B1B;
+    --warn:#FDB022; --warn-soft:#332305;
+    --holo:linear-gradient(135deg, #9B85FF, #6C93FF);
+    --shadow:0 2px 10px rgba(0,0,0,0.25); --shadow-md:0 12px 30px rgba(0,0,0,0.4);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
+  .mono{font-family:'Inter',-apple-system,sans-serif; font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1;}
+  a{color:inherit;}
+
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:224px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:20px 14px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:6px 8px 22px 8px;}
+  .brand-mark{width:30px; height:30px; border-radius:8px; background:var(--holo); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:14px; flex-shrink:0; font-family:'Fraunces',serif;}
+  .brand-name{font-family:'Fraunces',serif; font-weight:600; font-size:16px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:10.5px; color:var(--text-3); font-weight:500;}
+
+  .nav{display:flex; flex-direction:column; gap:2px;}
+  .nav-section{font-size:11px; text-transform:none; letter-spacing:0; color:var(--text-3); font-weight:700; padding:14px 10px 6px 10px;}
+  .nav-section:first-child{padding-top:0;}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; font-weight:500; color:var(--text-2); border:none; background:none; text-align:left; width:100%; position:relative;}
+  .nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:.8;}
+  .nav-item:hover{background:var(--surface-2); color:var(--text);}
+  .nav-item.active{background:var(--accent-soft); color:var(--accent-text); font-weight:600;}
+  .nav-item.active::before{content:""; position:absolute; left:-14px; top:4px; bottom:4px; width:3px; border-radius:0 4px 4px 0; background:var(--holo);}
+  .nav-item.active svg{opacity:1;}
+
+  .sidebar-foot{border-top:1px solid var(--border); padding-top:12px; margin-top:auto; display:flex; flex-direction:column; gap:6px;}
+
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:22px 28px 30px 28px; background:var(--holo); position:sticky; top:0; z-index:5; border-radius:0 0 26px 26px; box-shadow:var(--shadow-md);}
+  .topbar h1{font-family:'Fraunces',serif; font-size:20px; font-weight:600; letter-spacing:-0.01em; color:#fff;}
+  .topbar p{font-size:12.5px; color:rgba(255,255,255,0.82); margin-top:2px;}
+  .topbar-actions{display:flex; gap:8px; align-items:center;}
+  .topbar .icon-btn{background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.28); color:#fff;}
+  .topbar .icon-btn:hover{background:rgba(255,255,255,0.28);}
+
+  .quick-actions{display:flex; gap:12px; padding:0 28px; max-width:1180px; width:100%; margin:-20px auto 0 auto; position:relative; z-index:6;}
+  .quick-btn{flex:1; display:flex; align-items:center; gap:12px; padding:15px 16px; border-radius:16px; border:none; cursor:pointer; text-align:left; box-shadow:var(--shadow-md);}
+  .quick-icon{width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:rgba(255,255,255,0.24);}
+  .quick-icon svg{width:17px; height:17px; color:#fff;}
+  .quick-btn strong{display:block; font-size:14.5px; font-weight:800; color:#fff;}
+  .quick-btn small{display:block; font-size:11.5px; color:rgba(255,255,255,0.85); font-weight:500; margin-top:1px;}
+  .quick-buy{background:linear-gradient(135deg, #DB4C77, #F2678F);}
+  .quick-buy:hover{filter:brightness(1.06); transform:translateY(-1px);}
+  .quick-sell{background:linear-gradient(135deg, #059669, #10B981);}
+  .quick-sell:hover{filter:brightness(1.06); transform:translateY(-1px);}
+
+  .content{padding:24px 28px 60px 28px; max-width:1180px; width:100%; margin:0 auto;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .btn{display:inline-flex; align-items:center; gap:6px; padding:8px 13px; border-radius:10px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer; white-space:nowrap;}
+  .btn:hover{background:var(--surface-2); border-color:var(--text-3);}
+  .btn svg{width:14px; height:14px;}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:white;}
+  .btn-primary:hover{background:var(--accent-text); border-color:var(--accent-text);}
+  .btn-ghost{border-color:transparent; background:transparent;}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-sm{padding:5px 9px; font-size:12px;}
+  .icon-btn{width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); background:var(--surface); cursor:pointer; color:var(--text-2);}
+  .icon-btn:hover{background:var(--surface-2); color:var(--text);}
+  .icon-btn svg{width:16px; height:16px;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .stat-card{position:relative; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow); overflow:hidden;}
+  .stat-card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--holo);}
+  .stat-icon{width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:12px;}
+  .stat-icon svg{width:16px; height:16px;}
+  .stat-icon.tint-jade{background:var(--blue-soft); color:var(--blue-text);}
+  .stat-icon.tint-violet{background:var(--violet-soft); color:var(--violet-text);}
+  .stat-icon.tint-amber{background:var(--warn-soft); color:var(--warn);}
+  .stat-icon.tint-rose{background:var(--danger-soft); color:var(--danger);}
+  .stat-label{font-size:12px; color:var(--text-2); font-weight:600; margin-bottom:6px;}
+  .stat-value{font-family:'Fraunces',serif; font-size:24px; font-weight:600; letter-spacing:-0.02em;}
+  .stat-delta{font-size:11px; font-weight:600; margin-top:6px; display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:20px;}
+  .delta-up{color:var(--success); background:var(--success-soft);}
+  .delta-down{color:var(--danger); background:var(--danger-soft);}
+  .delta-neutral{color:var(--text-2); background:var(--surface-2);}
+
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:16px;}
+  .panel-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border);}
+  .panel-head h2{font-family:'Fraunces',serif; font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+  .panel-head p{font-size:12px; color:var(--text-2); margin-top:1px;}
+  .panel-body{padding:16px 18px;}
+  .two-col{display:grid; grid-template-columns:1.4fr 1fr; gap:14px;}
+
+  .goal-row{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px; gap:12px;}
+  .goal-row .val{font-size:13px; font-weight:700;}
+  .progress-track{height:8px; background:var(--surface-2); border-radius:20px; overflow:hidden; border:1px solid var(--border);}
+  .progress-fill{height:100%; background:var(--holo); border-radius:20px;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  thead th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-3); font-weight:700; padding:9px 10px; border-bottom:1px solid var(--border); background:var(--surface-2); white-space:nowrap;}
+  tbody td{padding:10px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  .cell-name{font-weight:600;}
+  .cell-sub{font-size:11px; color:var(--text-2);}
+  .table-wrap{overflow-x:auto;}
+  .num{font-family:'JetBrains Mono',monospace; font-weight:600; font-size:12px; white-space:nowrap;}
+  .pos{color:var(--success);}
+  .neg{color:var(--danger);}
+
+  .tag{display:inline-flex; align-items:center; padding:3px 8px; border-radius:6px; font-size:10.5px; font-weight:700; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); white-space:nowrap;}
+  .tag-mt{background:#DBF4F7; color:#0F8A9C; border-color:transparent;}
+  .tag-nm{background:#E1F5E3; color:#2E8B3D; border-color:transparent;}
+  .tag-ex{background:#EEF0D6; color:#707A17; border-color:transparent;}
+  .tag-gd{background:#FEF2D0; color:#B4880A; border-color:transparent;}
+  .tag-lp{background:#FDE6D2; color:#D5701A; border-color:transparent;}
+  .tag-pl{background:#FBDEDB; color:#C24C42; border-color:transparent;}
+  .tag-po{background:#F9D9D9; color:#C22C2C; border-color:transparent;}
+  .tag-prepared{background:var(--surface-2); color:var(--text-2);}
+  .tag-shipped{background:var(--warn-soft); color:var(--warn); border-color:transparent;}
+  .tag-delivered{background:var(--success-soft); color:var(--success); border-color:transparent;}
+  .tag-dispute{background:var(--danger-soft); color:var(--danger); border-color:transparent;}
+
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+  .empty{padding:40px 20px; text-align:center; color:var(--text-2);}
+  .empty svg{width:34px; height:34px; margin-bottom:10px; opacity:.4;}
+  .empty p{font-size:13px; margin-bottom:2px;}
+  .empty span{font-size:12px; color:var(--text-3);}
+
+  .month-group{margin-bottom:2px;}
+  .month-head{display:flex; align-items:center; justify-content:space-between; padding:10px 18px; background:var(--surface-2); border-bottom:1px solid var(--border); border-top:1px solid var(--border); cursor:pointer; user-select:none;}
+  .month-group:first-child .month-head{border-top:none;}
+  .month-head-left{display:flex; align-items:center; gap:8px;}
+  .month-head-left svg{width:13px; height:13px; color:var(--text-3); transition:transform .15s ease;}
+  .month-head.collapsed svg{transform:rotate(-90deg);}
+  .month-title{font-size:12.5px; font-weight:700; text-transform:capitalize;}
+  .month-count{font-size:11px; color:var(--text-3); font-weight:500;}
+  .month-total{font-size:12px; font-weight:700; text-align:right;}
+  .month-total small{display:block; font-weight:500; color:var(--text-3); font-size:10px;}
+  .month-table-wrap.collapsed{display:none;}
+
+  .data-note{font-size:11px; color:var(--text-3); padding:10px 2px 0 2px; line-height:1.5;}
+
+  .stock-row{display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--border); cursor:pointer;}
+  .stock-row:last-child{border-bottom:none;}
+  .stock-row:hover{background:var(--surface-2);}
+  .stock-thumb{width:60px; height:60px; border-radius:14px; object-fit:cover; flex-shrink:0; background:var(--surface-2);}
+  .stock-thumb-empty{width:60px; height:60px; border-radius:14px; flex-shrink:0; background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--text-3);}
+  .stock-body{flex:1; min-width:0;}
+  .stock-name{font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .stock-sub{font-size:11.5px; color:var(--text-2); margin-top:3px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .stock-price{text-align:right; flex-shrink:0; padding-left:6px;}
+  .stock-price .big{font-family:'Inter',sans-serif; font-weight:800; font-size:19px; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .stock-price .small{font-size:10.5px; color:var(--text-3); margin-top:2px;}
+  .stock-actions{display:flex; flex-direction:column; gap:6px; margin-left:4px; flex-shrink:0;}
+  .stock-actions button{flex-shrink:0;}
+
+  .field{display:flex; flex-direction:column; gap:5px; margin-bottom:14px;}
+  .field label{font-size:12px; font-weight:600; color:var(--text-2);}
+  .field-hint{font-size:10.5px; color:var(--text-3); margin-top:-2px;}
+  .field input, .field select, .field textarea{padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; font-family:inherit; outline:none; width:100%;}
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--accent);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .field-row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .switch-row{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);}
+  .switch-row:last-child{border-bottom:none;}
+  .switch-label strong{display:block; font-size:13.5px; font-weight:600;}
+  .switch-label span{font-size:11.5px; color:var(--text-2);}
+  .switch{position:relative; width:40px; height:22px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .switch-slider{position:absolute; inset:0; background:var(--border); border-radius:20px; cursor:pointer; transition:.15s;}
+  .switch-slider:before{content:""; position:absolute; width:16px; height:16px; left:3px; top:3px; background:white; border-radius:50%; transition:.15s;}
+  .switch input:checked + .switch-slider{background:var(--accent);}
+  .switch input:checked + .switch-slider:before{transform:translateX(18px);}
+
+  .breakdown{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-size:12.5px; display:flex; flex-direction:column; gap:6px; margin-top:14px;}
+  .breakdown-row{display:flex; justify-content:space-between;}
+  .breakdown-row.total{border-top:1px dashed var(--border); padding-top:6px; margin-top:2px; font-weight:700;}
+  .breakdown-row span:first-child{color:var(--text-2);}
+
+  .overlay{position:fixed; inset:0; background:rgba(10,11,15,0.5); backdrop-filter:blur(2px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .overlay.active{display:flex;}
+  .modal{background:var(--surface); border:1px solid var(--border); border-radius:14px; width:100%; max-width:460px; box-shadow:var(--shadow-md); max-height:88vh; overflow-y:auto;}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface);}
+  .modal-head h3{font-size:15px; font-weight:700;}
+  .modal-body{padding:18px; display:flex; flex-direction:column; gap:12px;}
+  .modal-foot{padding:14px 18px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; position:sticky; bottom:0; background:var(--surface);}
+  .modal-foot.justify-between{justify-content:space-between;}
+
+  textarea.notes-area{width:100%; min-height:320px; resize:vertical; padding:16px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13.5px; line-height:1.6; font-family:inherit; outline:none;}
+  textarea.notes-area:focus{border-color:var(--accent);}
+
+  .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; opacity:0; transition:all .25s ease; z-index:100; pointer-events:none; box-shadow:var(--shadow-md); display:flex; align-items:center;}
+  .toast.show{pointer-events:auto;}
+  #toastUndoBtn{color:#8DA0FF !important;}
+  [data-theme="dark"] .toast{background:var(--surface); color:var(--text); border:1px solid var(--border);}
+  [data-theme="dark"] #toastUndoBtn{color:var(--accent-text) !important;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  select.status-select{padding:5px 8px; font-size:11.5px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-weight:600;}
+  .track-link{font-size:11px; color:var(--accent-text); text-decoration:underline; cursor:pointer;}
+
+  .margin-badge{display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:20px; font-size:12.5px; font-weight:700;}
+  .margin-badge.red{background:var(--danger-soft); color:var(--danger);}
+  .margin-badge.orange{background:var(--warn-soft); color:var(--warn);}
+  .margin-badge.green{background:var(--success-soft); color:var(--success);}
+  .margin-dot{width:8px; height:8px; border-radius:50%; background:currentColor; flex-shrink:0;}
+  .sim-result{border-radius:20px; padding:26px 20px; text-align:center; border:2px solid var(--border); background:var(--surface-2); transition:all .2s ease; margin-bottom:14px;}
+  .sim-result.red{background:linear-gradient(180deg, var(--danger-soft), var(--surface)); border-color:var(--danger);}
+  .sim-result.orange{background:linear-gradient(180deg, var(--warn-soft), var(--surface)); border-color:var(--warn);}
+  .sim-result.green{background:linear-gradient(180deg, var(--success-soft), var(--surface)); border-color:var(--success);}
+  .sim-emoji{font-size:38px; line-height:1; margin-bottom:6px;}
+  .sim-pct{font-family:'Fraunces',serif; font-size:44px; font-weight:600; letter-spacing:-0.02em; line-height:1.1;}
+  .sim-net{font-size:15px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;}
+  .sim-comment{font-size:13.5px; margin-top:10px; font-weight:600; max-width:280px; margin-left:auto; margin-right:auto; line-height:1.4;}
+  .threshold-bar{height:10px; border-radius:20px; overflow:hidden; display:flex; margin:6px 0 4px 0;}
+  .threshold-bar div{height:100%;}
+
+  @media (max-width: 880px){
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .two-col{grid-template-columns:1fr;}
+  }
+  @media (max-width: 720px){
+    .sidebar{position:fixed; left:0; bottom:0; top:auto; width:100%; height:auto; flex-direction:row; align-items:center; padding:8px 4px; border-right:none; border-top:1px solid var(--border); z-index:20; overflow-x:auto;}
+    .brand, .sidebar-foot, .nav-section{display:none;}
+    .nav{flex-direction:row; flex:1; justify-content:space-around;}
+    .nav-item{flex-direction:column; gap:3px; font-size:9.5px; padding:6px 6px;}
+    .nav-item span{white-space:nowrap;}
+    .main{padding-bottom:66px;}
+    .content{padding:4px 14px 40px 14px;}
+    .topbar{padding:14px 16px;}
+    .quick-actions{padding:14px 14px 4px 14px; gap:8px;}
+    .quick-btn{padding:11px 10px;}
+    .quick-btn small{display:none;}
+    .stat-grid{grid-template-columns:1fr 1fr; gap:10px;}
+    .stat-value{font-size:18px;}
+    .field-row, .field-row3{grid-template-columns:1fr;}
+    table{font-size:11.5px;}
+    .nav-item:not(.nav-primary):not(.nav-more-btn){display:none;}
+    .nav-more-btn{display:flex !important;}
+    .nav-item.active::before{left:16%; right:16%; top:auto; bottom:-6px; width:auto; height:3px; border-radius:4px 4px 0 0;}
+  }
+  .nav-more-btn{display:none;}
+
+  .more-sheet-backdrop{position:fixed; inset:0; background:rgba(10,11,15,0.45); z-index:24; opacity:0; pointer-events:none; transition:opacity .18s ease;}
+  .more-sheet-backdrop.open{opacity:1; pointer-events:auto;}
+  .more-sheet{position:fixed; left:0; right:0; bottom:0; background:var(--surface); border-radius:16px 16px 0 0; box-shadow:var(--shadow-md); z-index:25; transform:translateY(100%); transition:transform .22s ease; padding:6px 16px 18px 16px; max-height:60vh; overflow-y:auto;}
+  .more-sheet.open{transform:translateY(0);}
+  .more-sheet-head{display:flex; align-items:center; justify-content:space-between; padding:14px 2px 12px 2px;}
+  .more-sheet-head span{font-size:14.5px; font-weight:700;}
+  .more-sheet-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+  .more-sheet-item{display:flex; flex-direction:column; align-items:center; gap:7px; padding:14px 6px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); cursor:pointer; font-size:11.5px; font-weight:600; color:var(--text-2);}
+  .more-sheet-item svg{width:19px; height:19px;}
+  .more-sheet-item.active{background:var(--accent-soft); color:var(--accent-text); border-color:transparent;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CF</div>
+      <div>
+        <div class="brand-name">CardFolio</div>
+        <div class="brand-sub">Pokémon trading tracker</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Activité</div>
+      <button class="nav-item nav-primary active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+        <span>Statistiques</span>
+      </button>
+      <button class="nav-item nav-primary" data-view="achats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M9 21h6M9 7h6M9 11h6"/></svg>
+        <span>Achats</span>
+      </button>
+      <button class="nav-item nav-primary" data-view="ventes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+        <span>Ventes</span>
+      </button>
+      <button class="nav-item" data-view="livraisons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="15" height="12" rx="1.5"/><path d="M16 11h3.5L22 14.5V19h-6"/><circle cx="6" cy="19.5" r="1.8"/><circle cx="17.5" cy="19.5" r="1.8"/></svg>
+        <span>Livraisons</span>
+      </button>
+      <button class="nav-item" data-view="watchlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Watchlist</span>
+      </button>
+      <div class="nav-section">Gestion</div>
+      <button class="nav-item nav-primary" data-view="simulateur">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="10" y2="11"/><line x1="12" y1="11" x2="14" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="10" y2="15"/><line x1="12" y1="15" x2="14" y2="15"/><line x1="8" y1="18" x2="10" y2="18"/></svg>
+        <span>Simulateur</span>
+      </button>
+      <button class="nav-item nav-more-btn" id="moreTabBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span>Plus</span>
+      </button>
+      <button class="nav-item" data-view="notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5M6 3h8l6 6v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M9 13h6M9 17h4"/></svg>
+        <span>Notes</span>
+      </button>
+      <button class="nav-item" data-view="parametres">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Paramètres</span>
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="btn btn-ghost btn-sm" id="exportBtn" style="justify-content:flex-start;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exporter (JSON)
+      </button>
+      <button class="btn btn-ghost btn-sm" id="importBtn" style="justify-content:flex-start;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importer
+      </button>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+      <p class="data-note">Sauvegarde automatique dans ce navigateur. Exporte régulièrement pour ne rien perdre.</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="topTitle">Dashboard</h1>
+        <p id="topSub">Vue d'ensemble de ton activité achat-revente</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggle" title="Changer le thème">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="quick-btn quick-buy" id="quickBuyBtn">
+        <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        <span><strong>Achat</strong><small>Enregistrer une carte achetée</small></span>
+      </button>
+      <button class="quick-btn quick-sell" id="quickSellBtn">
+        <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+        <span><strong>Vente</strong><small>Enregistrer une carte vendue</small></span>
+      </button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div id="exportReminder" style="display:none; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-radius:12px; background:var(--warn-soft); border:1px solid var(--warn); margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span id="exportReminderText" style="font-size:12.5px; font-weight:600; color:var(--text);"></span>
+          </div>
+          <button class="btn btn-sm" id="exportReminderBtn" style="background:var(--warn); border-color:var(--warn); color:white; flex-shrink:0;">Exporter</button>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon tint-jade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <div class="stat-label">Capital investi (stock)</div>
+            <div class="stat-value mono" id="statInvested">0 €</div>
+            <span class="stat-delta delta-neutral" id="statInvestedSub">0 carte</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon tint-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+            <div class="stat-label">Chiffre d'affaires (ventes)</div>
+            <div class="stat-value mono" id="statCA">0 €</div>
+            <span class="stat-delta delta-neutral" id="statSalesCount">0 vente</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon tint-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+            <div class="stat-label">Cotisations URSSAF dues</div>
+            <div class="stat-value mono" id="statUrssaf">0 €</div>
+            <span class="stat-delta delta-neutral" id="statUrssafSub">Désactivé</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon tint-rose" id="profitIconWrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <div class="stat-label">Marge nette réelle</div>
+            <div class="stat-value mono" id="statProfit">0 €</div>
+            <span class="stat-delta" id="statProfitDelta">—</span>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head">
+              <div><h2>Dernières cartes en stock</h2><p>Les 5 plus récentes</p></div>
+              <button class="btn btn-ghost btn-sm" data-goto="achats">Voir tout</button>
+            </div>
+            <div id="dashInventoryBody"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>Objectif du mois</h2><p>Marge nette réelle</p></div></div>
+            <div class="panel-body">
+              <div class="goal-row">
+                <div>
+                  <div class="stat-label" style="margin-bottom:2px;">Ce mois-ci</div>
+                  <span class="mono" id="goalCurrent" style="font-size:20px; font-weight:800;">0 €</span>
+                </div>
+                <div style="text-align:right;">
+                  <div class="stat-label" style="margin-bottom:2px;">Objectif — clique pour modifier</div>
+                  <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
+                    <input id="goalInput" type="number" value="200" style="width:76px; padding:7px 9px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-weight:700; font-family:'JetBrains Mono',monospace; text-align:right; outline:none; font-size:13px;">
+                    <span style="font-size:13px; color:var(--text-2);">€</span>
+                  </div>
+                </div>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="goalFill" style="width:0%;"></div></div>
+              <p style="font-size:11.5px; color:var(--text-3); margin-top:10px;">Marge nette = après commission, port, emballage et URSSAF.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SIMULATEUR -->
+      <section class="view" id="view-simulateur">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Simulateur de rentabilité</h2><p>Une offre te tombe sur Vinted ? Vérifie si elle vaut le coup avant de répondre</p></div></div>
+          <div class="panel-body">
+            <div class="field-row">
+              <div class="field"><label>Prix d'achat de la carte (€)</label><input type="number" id="sim-buy" step="0.01" placeholder="0"></div>
+              <div class="field"><label>Frais d'achat déjà payés (€)</label><input type="number" id="sim-buyfees" step="0.01" placeholder="0"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Prix de vente proposé / offre reçue (€)</label><input type="number" id="sim-price" step="0.01" placeholder="0"></div>
+              <div class="field"><label>Plateforme</label><select id="sim-platform"></select></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Commission (%)</label><input type="number" id="sim-commission-pct" step="0.1"></div>
+              <div class="field"><label>Frais de port (€)</label><input type="number" id="sim-shipping" step="0.01"></div>
+            </div>
+            <div class="field"><label>Coût d'emballage (€)</label><input type="number" id="sim-packaging" step="0.01" style="max-width:220px;"></div>
+
+            <div class="sim-result" id="simResultBox">
+              <div class="sim-emoji" id="simEmoji">🤔</div>
+              <div class="sim-pct" id="simPct">—</div>
+              <div class="sim-net" id="simNet">Bénéfice net : 0 €</div>
+              <div class="sim-comment" id="simComment">Renseigne les champs pour voir le résultat.</div>
+            </div>
+            <div class="breakdown" id="simBreakdown"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATISTIQUES -->
+      <section class="view" id="view-stats">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>CA et achats par mois</h2><p>Vue année par année</p></div>
+            <select id="statsYearSelect" style="padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; font-weight:600;"></select>
+          </div>
+          <div class="panel-body">
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:18px;">
+              <div class="stat-card">
+                <div class="stat-label">CA de l'année</div>
+                <div class="stat-value mono" id="yearCA">0 €</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Investi (achats) de l'année</div>
+                <div class="stat-value mono" id="yearInvested">0 €</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Cotisations URSSAF</div>
+                <div class="stat-value mono" id="yearUrssaf">0 €</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Marge nette de l'année</div>
+                <div class="stat-value mono" id="yearMargin">0 €</div>
+              </div>
+            </div>
+            <div class="panel" style="box-shadow:none; border:1px solid var(--border); margin-bottom:16px;">
+              <div class="panel-body">
+                <div id="statsChart"></div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Mois</th><th>Achats</th><th>CA (ventes)</th><th>Marge nette</th><th style="min-width:160px;">Comparaison CA / Achats</th></tr></thead>
+                <tbody id="statsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACHATS -->
+      <section class="view" id="view-achats">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Achats</h2><p>Cartes en stock</p></div></div>
+          <div class="panel-body" style="display:flex; gap:10px; flex-wrap:wrap; padding-bottom:12px;">
+            <div style="flex:1; min-width:180px; position:relative;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-3); pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="stockSearch" placeholder="Rechercher une carte, un set..." style="width:100%; padding:9px 10px 9px 32px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none;">
+            </div>
+            <select id="stockSort" style="padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; font-weight:600;">
+              <option value="date-desc">Plus récent d'abord</option>
+              <option value="date-asc">Plus ancien d'abord</option>
+              <option value="name-asc">Nom (A → Z)</option>
+              <option value="price-desc">Prix (élevé → bas)</option>
+              <option value="price-asc">Prix (bas → élevé)</option>
+            </select>
+          </div>
+          <div id="inventoryGroups"></div>
+          <div class="empty" id="inventoryEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M9 21h6M9 7h6M9 11h6"/></svg>
+            <p>Aucune carte en stock</p>
+            <span>Ajoute ton premier achat pour démarrer ton suivi.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- VENTES -->
+      <section class="view" id="view-ventes">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Ventes</h2><p>Marge nette calculée après tous les frais</p></div></div>
+          <div id="salesGroups"></div>
+          <div class="empty" id="salesEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+            <p>Aucune vente enregistrée</p>
+            <span>Marque une carte comme vendue depuis les Achats.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIVRAISONS -->
+      <section class="view" id="view-livraisons">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Livraisons</h2><p>Suivi des colis expédiés aux acheteurs</p></div></div>
+          <div class="panel-body" style="display:flex; gap:10px; flex-wrap:wrap; padding-bottom:12px;">
+            <div style="flex:1; min-width:180px; position:relative;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-3); pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="shipSearch" placeholder="Rechercher une carte, un n° de suivi..." style="width:100%; padding:9px 10px 9px 32px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none;">
+            </div>
+            <select id="shipSort" style="padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; font-weight:600;">
+              <option value="date-desc">Plus récent d'abord</option>
+              <option value="date-asc">Plus ancien d'abord</option>
+              <option value="status">Par statut</option>
+              <option value="name-asc">Nom (A → Z)</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Carte</th><th>Acheteur / Vente</th><th>Transporteur</th><th>N° de suivi</th><th>Statut</th><th>Date d'envoi</th></tr></thead>
+              <tbody id="shippingBody"></tbody>
+            </table>
+            <div class="empty" id="shippingEmpty" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="7" width="15" height="12" rx="1.5"/><path d="M16 11h3.5L22 14.5V19h-6"/></svg>
+              <p>Aucune expédition</p>
+              <span>Les expéditions apparaissent ici après chaque vente.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WATCHLIST -->
+      <section class="view" id="view-watchlist">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Watchlist</h2><p>Cartes repérées, pas encore achetées</p></div>
+            <button class="btn btn-primary btn-sm" id="addWatchBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Carte</th><th>Prix cible</th><th>Où la trouver</th><th>Note</th><th></th></tr></thead>
+              <tbody id="watchBody"></tbody>
+            </table>
+            <div class="empty" id="watchEmpty" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              <p>Watchlist vide</p>
+              <span>Ajoute les cartes que tu surveilles avant achat.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTES -->
+      <section class="view" id="view-notes">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Notes & stratégie</h2><p>Tendances, sets à privilégier, contacts</p></div></div>
+          <div class="panel-body">
+            <textarea class="notes-area" id="notesArea" placeholder="Ex : privilégier les sets Écarlate &amp; Violet en ce moment, contact fiable sur Vinted @..."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- PARAMÈTRES -->
+      <section class="view" id="view-parametres">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Statut & fiscalité</h2><p>Ces réglages servent à calculer ta marge nette réelle</p></div></div>
+          <div class="panel-body">
+            <div class="switch-row">
+              <div class="switch-label"><strong>Auto-entrepreneur</strong><span>Active le calcul automatique des cotisations URSSAF sur le CA</span></div>
+              <label class="switch"><input type="checkbox" id="p-autoent"><span class="switch-slider"></span></label>
+            </div>
+            <div class="switch-row" id="urssafRateRow">
+              <div class="switch-label"><strong>Taux de cotisation URSSAF</strong><span>Vente de marchandises (BIC) — modifiable selon ta situation</span></div>
+              <div style="display:flex; align-items:center; gap:4px;"><input type="number" id="p-urssafrate" step="0.1" style="width:70px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); text-align:right;"><span style="font-size:13px; color:var(--text-2);">%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Seuils du simulateur de rentabilité</h2><p>Définissent quand une marge s'affiche en rouge, orange ou vert (calculée sur le prix d'achat + frais)</p></div></div>
+          <div class="panel-body">
+            <div class="threshold-bar">
+              <div style="background:var(--danger); flex:1;"></div>
+              <div style="background:var(--warn); flex:1;"></div>
+              <div style="background:var(--success); flex:1;"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Marge faible en dessous de (%)</label><input type="number" id="p-threshlow" step="1"></div>
+              <div class="field"><label>Bonne marge à partir de (%)</label><input type="number" id="p-threshhigh" step="1"></div>
+            </div>
+            <p class="field-hint">Entre les deux : marge jugée correcte (orange).</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Commissions par plateforme</h2><p>Pré-remplies automatiquement dans le formulaire de vente</p></div></div>
+          <div class="panel-body" id="platformFeesBody" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Coûts par défaut</h2><p>Emballage et port, réutilisés à chaque vente (modifiables au cas par cas)</p></div></div>
+          <div class="panel-body">
+            <div class="field-row">
+              <div class="field"><label>Coût d'emballage par défaut (€)</label><input type="number" id="p-packaging" step="0.01"></div>
+              <div class="field"><label>Frais de port par défaut (€)</label><input type="number" id="p-shipping" step="0.01"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Sauvegarde de tes données</h2><p>Tout est stocké uniquement sur cet appareil, dans ce navigateur</p></div></div>
+          <div class="panel-body">
+            <p style="font-size:12.5px; color:var(--text-2); line-height:1.6; margin-bottom:14px;">
+              Tes achats, ventes, watchlist et notes sont sauvegardés automatiquement, mais uniquement ici — sur cet appareil et dans ce navigateur précis. Si tu changes de téléphone/ordinateur, si tu vides le cache, ou si tu utilises un autre navigateur, ces données ne seront pas là.
+              <br><br>
+              <strong style="color:var(--text);">Exporter</strong> télécharge un fichier <code style="background:var(--surface-2); padding:1px 5px; border-radius:4px;">.json</code> contenant tout — garde-le comme sauvegarde, envoie-le toi-même par mail, ou mets-le sur un cloud.
+              <br><br>
+              <strong style="color:var(--text);">Importer</strong> recharge un fichier exporté précédemment — utile pour changer d'appareil, ou pour revenir en arrière si besoin. Attention : importer remplace complètement les données actuelles.
+            </p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" id="exportBtn2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exporter mes données (JSON)
+              </button>
+              <button class="btn" id="importBtn2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Importer un fichier
+              </button>
+              <input type="file" id="importFile2" accept=".json" style="display:none;">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Diagnostic du stockage</h2><p>Pour comprendre exactement ce qui se passe</p></div></div>
+          <div class="panel-body">
+            <div id="storageDiagBox" style="font-size:12.5px; color:var(--text-2); line-height:1.9; font-family:'JetBrains Mono',monospace;"></div>
+            <button class="btn btn-sm" id="refreshDiagBtn" style="margin-top:10px;">Actualiser le diagnostic</button>
+          </div>
+        </div>
+
+        <div class="panel" style="border-color:var(--danger);">
+          <div class="panel-head"><div><h2 style="color:var(--danger);">Zone de secours</h2><p>À utiliser seulement si le stockage reste bloqué malgré tout</p></div></div>
+          <div class="panel-body">
+            <p style="font-size:12.5px; color:var(--text-2); line-height:1.6; margin-bottom:14px;">
+              Si l'app affiche "stockage plein" en boucle et que rien ne se sauvegarde, exporte d'abord tes données (bouton ci-dessus) si possible, puis vide le stockage local pour repartir sur une base saine. Tu pourras réimporter ton export ensuite.
+            </p>
+            <button class="btn" id="resetStorageBtn" style="border-color:var(--danger); color:var(--danger);">Vider le stockage local et redémarrer</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: Ajouter achat -->
+<div class="overlay" id="cardModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="cardModalTitle">Nouvel achat</h3>
+      <button class="icon-btn" data-close="cardModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Photo de la carte (optionnel)</label>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="f-image-preview" style="width:56px; height:56px; border-radius:10px; background:var(--surface-2); border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:20px; height:20px; color:var(--text-3);"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" class="btn btn-sm" id="f-image-btn">Choisir une photo</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="f-image-clear" style="display:none;">Retirer</button>
+          </div>
+          <input type="file" id="f-image" accept="image/*" style="display:none;">
+        </div>
+      </div>
+      <div class="field"><label>Nom de la carte</label><input type="text" id="f-name" placeholder="Ex : Dracaufeu ex 199/165"></div>
+      <div class="field-row">
+        <div class="field"><label>Set</label><input type="text" id="f-set" placeholder="Ex : Évolutions Prismatiques"></div>
+        <div class="field"><label>État</label>
+          <select id="f-state">
+            <option value="Mint">Mint</option>
+            <option value="Near Mint">Near Mint</option>
+            <option value="Excellent">Excellent</option>
+            <option value="Good">Good</option>
+            <option value="Light Played">Light Played</option>
+            <option value="Played">Played</option>
+            <option value="Poor">Poor</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Prix de la carte (€)</label><input type="number" id="f-buy" placeholder="0" step="0.01"></div>
+        <div class="field"><label>Frais d'achat (€)</label><input type="number" id="f-buyfees" placeholder="0" step="0.01"></div>
+      </div>
+      <p class="field-hint">Frais d'achat = port payé pour la recevoir, commission éventuelle.</p>
+      <div class="field-row">
+        <div class="field"><label>Date d'achat</label><input type="date" id="f-buydate"></div>
+        <div class="field"><label>Prix de revente visé (€)</label><input type="number" id="f-target" placeholder="0" step="0.01"></div>
+      </div>
+    </div>
+    <div class="modal-foot" id="cardModalFoot">
+      <button class="btn btn-ghost" id="deleteCardFromModalBtn" style="display:none; color:var(--danger);">Supprimer</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" data-close="cardModal">Annuler</button>
+        <button class="btn btn-primary" id="saveCardBtn">Ajouter au stock</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Marquer vendue -->
+<div class="overlay" id="sellModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Nouvelle vente</h3>
+      <button class="icon-btn" data-close="sellModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Type de vente</label>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-sm sell-mode-btn active" data-mode="single" style="flex:1; justify-content:center;">Carte unique</button>
+          <button type="button" class="btn btn-sm sell-mode-btn" data-mode="lot" style="flex:1; justify-content:center;">Lot de cartes</button>
+        </div>
+      </div>
+
+      <div class="field" id="sell-single-picker" style="position:relative;">
+        <label>Carte vendue</label>
+        <input type="text" id="s-card-search" placeholder="Rechercher dans ton stock..." autocomplete="off">
+        <div id="s-card-selected" style="display:none; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2); margin-top:6px;">
+          <div id="s-card-selected-thumb"></div>
+          <div style="flex:1; min-width:0;">
+            <div id="s-card-selected-name" style="font-weight:700; font-size:13px;"></div>
+            <div id="s-card-selected-sub" style="font-size:11px; color:var(--text-2);"></div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="s-card-change">Changer</button>
+        </div>
+        <div id="s-card-results" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-md); max-height:260px; overflow-y:auto; margin-top:4px;"></div>
+      </div>
+
+      <div id="sell-lot-picker" style="display:none;">
+        <div class="field">
+          <label>Nom du lot (optionnel)</label>
+          <input type="text" id="s-lot-name" placeholder="Ex : Lot 20 cartes vrac, ou laisse vide">
+        </div>
+        <div class="field">
+          <label>Cartes à inclure dans le lot</label>
+          <input type="text" id="s-lot-search" placeholder="Rechercher pour ajouter des cartes..." autocomplete="off">
+        </div>
+        <div id="s-lot-results" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; margin-top:6px;"></div>
+        <div id="s-lot-summary" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--surface-2); font-size:12.5px; font-weight:600;">
+          <span id="s-lot-count">0 carte sélectionnée</span>
+          <span class="mono" id="s-lot-total">0,00 €</span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field"><label id="s-price-label">Prix de vente (€)</label><input type="number" id="s-price" step="0.01"></div>
+        <div class="field"><label>Plateforme</label><select id="s-platform"></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Commission (%)</label><input type="number" id="s-commission-pct" step="0.1"></div>
+        <div class="field"><label>Frais de port payés (€)</label><input type="number" id="s-shipping" step="0.01"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Coût d'emballage (€)</label><input type="number" id="s-packaging" step="0.01"></div>
+        <div class="field"><label>Date de vente</label><input type="date" id="s-date"></div>
+      </div>
+
+      <div class="breakdown" id="sellBreakdown"></div>
+
+      <div class="field" style="border-top:1px solid var(--border); padding-top:12px; margin-top:2px;">
+        <label>Acheteur (nom ou pseudo, optionnel)</label>
+        <input type="text" id="s-buyer" placeholder="Ex : @pseudo_vinted, Julie D.">
+      </div>
+      <div class="field">
+        <label>Transporteur</label>
+        <select id="s-carrier">
+          <option value="">— À définir —</option>
+          <option>Colissimo</option>
+          <option>Mondial Relay</option>
+          <option>Vinted Go</option>
+          <option>Chronopost</option>
+          <option>Lettre suivie</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>N° de suivi</label><input type="text" id="s-tracking" placeholder="Optionnel"></div>
+        <div class="field"><label>Statut d'envoi</label>
+          <select id="s-status">
+            <option value="prepared">Préparé</option>
+            <option value="shipped">Expédié</option>
+            <option value="delivered">Livré</option>
+            <option value="dispute">Litige</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="sellModal">Annuler</button>
+      <button class="btn btn-primary" id="confirmSellBtn">Confirmer la vente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: éditer livraison -->
+<div class="overlay" id="shipModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Suivi de livraison</h3>
+      <button class="icon-btn" data-close="shipModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:var(--text-2);" id="shipCardName"></p>
+      <div class="field"><label>Acheteur (nom ou pseudo, optionnel)</label><input type="text" id="sh-buyer" placeholder="Ex : @pseudo_vinted, Julie D."></div>
+      <div class="field"><label>Transporteur</label>
+        <select id="sh-carrier">
+          <option value="">— À définir —</option>
+          <option>Colissimo</option>
+          <option>Mondial Relay</option>
+          <option>Vinted Go</option>
+          <option>Chronopost</option>
+          <option>Lettre suivie</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>N° de suivi</label>
+        <input type="text" id="sh-tracking">
+        <a href="#" id="sh-track-link" target="_blank" rel="noopener" style="display:none; font-size:12px; color:var(--accent-text); font-weight:600; text-decoration:underline; margin-top:4px;">Ouvrir le suivi du colis ↗</a>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Statut</label>
+          <select id="sh-status">
+            <option value="prepared">Préparé</option>
+            <option value="shipped">Expédié</option>
+            <option value="delivered">Livré</option>
+            <option value="dispute">Litige</option>
+          </select>
+        </div>
+        <div class="field"><label>Date d'envoi</label><input type="date" id="sh-date"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="shipModal">Annuler</button>
+      <button class="btn btn-primary" id="saveShipBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Watchlist -->
+<div class="overlay" id="watchModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Ajouter à la watchlist</h3>
+      <button class="icon-btn" data-close="watchModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Nom de la carte</label><input type="text" id="w-name" placeholder="Ex : Pikachu Illustrator"></div>
+      <div class="field"><label>Prix cible (€)</label><input type="number" id="w-price" step="0.01"></div>
+      <div class="field"><label>Où la trouver</label><input type="text" id="w-where" placeholder="Ex : Vinted, groupe FB local..."></div>
+      <div class="field"><label>Note</label><input type="text" id="w-note" placeholder="Optionnel"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="watchModal">Annuler</button>
+      <button class="btn btn-primary" id="saveWatchBtn">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="more-sheet-backdrop" id="moreSheetBackdrop"></div>
+<div class="more-sheet" id="moreSheet">
+  <div class="more-sheet-head">
+    <span>Plus d'options</span>
+    <button class="icon-btn" id="closeMoreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="more-sheet-grid">
+    <button class="more-sheet-item" data-view="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+      <span>Statistiques</span>
+    </button>
+    <button class="more-sheet-item" data-view="livraisons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="15" height="12" rx="1.5"/><path d="M16 11h3.5L22 14.5V19h-6"/><circle cx="6" cy="19.5" r="1.8"/><circle cx="17.5" cy="19.5" r="1.8"/></svg>
+      <span>Livraisons</span>
+    </button>
+    <button class="more-sheet-item" data-view="watchlist">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Watchlist</span>
+    </button>
+    <button class="more-sheet-item" data-view="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5M6 3h8l6 6v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M9 13h6M9 17h4"/></svg>
+      <span>Notes</span>
+    </button>
+    <button class="more-sheet-item" data-view="parametres">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Paramètres</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastMsg"></span>
+  <button id="toastUndoBtn" style="display:none; background:none; border:none; color:var(--accent-text); font-weight:700; font-size:13px; cursor:pointer; margin-left:10px; text-decoration:underline;">Annuler</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "cardfolio_data_v2";
+  const THEME_KEY = "cardfolio_theme";
+
+  /* ---------- STOCKAGE (IndexedDB — bien plus de capacité que localStorage) ---------- */
+  const IDB_NAME = "cardfolio_images_db";
+  const IDB_STORE = "images";
+  const IDB_STATE_STORE = "app_state";
+  const STATE_KEY = "state";
+  let idbInstance = null;
+  let imageCache = {}; // imageId -> dataURL, chargé en mémoire au démarrage
+
+  function openIDB(){
+    return new Promise((resolve, reject)=>{
+      if(idbInstance){ resolve(idbInstance); return; }
+      if(!window.indexedDB){ reject(new Error("IndexedDB indisponible")); return; }
+      const req = indexedDB.open(IDB_NAME, 2);
+      req.onupgradeneeded = (e)=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        if(!db.objectStoreNames.contains(IDB_STATE_STORE)) db.createObjectStore(IDB_STATE_STORE);
+      };
+      req.onsuccess = (e)=>{ idbInstance = e.target.result; resolve(idbInstance); };
+      req.onerror = (e)=> reject(e);
+    });
+  }
+  function idbSet(key, value){
+    return openIDB().then(db=>new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = ()=>resolve(true);
+      tx.onerror = (e)=>reject(e);
+    })).catch(e=>{ console.warn("Écriture image impossible", e); return false; });
+  }
+  function idbDelete(key){
+    return openIDB().then(db=>new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = ()=>resolve(true);
+      tx.onerror = (e)=>reject(e);
+    })).catch(()=>false);
+  }
+  function idbGetAll(){
+    return openIDB().then(db=>new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const result = {};
+      const req = store.openCursor();
+      req.onsuccess = (e)=>{
+        const cursor = e.target.result;
+        if(cursor){ result[cursor.key] = cursor.value; cursor.continue(); }
+        else resolve(result);
+      };
+      req.onerror = (e)=>reject(e);
+    })).catch(()=>({}));
+  }
+  function idbSetState(stateObj){
+    return openIDB().then(db=>new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STATE_STORE, 'readwrite');
+      tx.objectStore(IDB_STATE_STORE).put(stateObj, STATE_KEY);
+      tx.oncomplete = ()=>resolve(true);
+      tx.onerror = (e)=>reject(e);
+    })).catch(e=>{
+      console.warn("Sauvegarde IndexedDB impossible", e);
+      showToast("⚠️ Sauvegarde échouée. Tes derniers changements ne sont peut-être pas enregistrés.");
+      return false;
+    });
+  }
+  function idbGetState(){
+    return openIDB().then(db=>new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STATE_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STATE_STORE).get(STATE_KEY);
+      req.onsuccess = ()=>resolve(req.result || null);
+      req.onerror = (e)=>reject(e);
+    })).catch(e=>{ console.warn("Lecture IndexedDB impossible", e); return null; });
+  }
+  function getImageSrc(item){
+    if(!item) return null;
+    if(item.imageId && imageCache[item.imageId]) return imageCache[item.imageId];
+    if(item.image) return item.image; // ancien format (avant migration IndexedDB)
+    return null;
+  }
+  // Migre un item avec un ancien champ .image (base64 dans localStorage) vers IndexedDB.
+  // Retourne l'imageId final (existant ou nouvellement créé), ou null si pas d'image.
+  function ensureImageId(item){
+    if(!item) return null;
+    if(item.imageId) return item.imageId;
+    if(item.image){
+      const id = uid();
+      imageCache[id] = item.image;
+      idbSet(id, item.image);
+      item.imageId = id;
+      item.image = null;
+      return id;
+    }
+    return null;
+  }
+  async function migrateLegacyImages(){
+    let changed = false;
+    state.inventory.forEach(c=>{ if(c.image && !c.imageId){ ensureImageId(c); changed = true; } });
+    state.sales.forEach(s=>{ if(s.image && !s.imageId){ ensureImageId(s); changed = true; } });
+    if(changed) save();
+  }
+
+  const defaultSettings = {
+    autoEntrepreneur: false,
+    urssafRate: 12.3,
+    packagingDefault: 0.5,
+    shippingDefault: 0,
+    marginThresholds: { low: 15, high: 40 },
+    platformFees: { "Vinted": 5, "eBay": 11, "Cardmarket": 5, "LeBonCoin": 0, "En main propre": 0, "Autre": 0 }
+  };
+
+  let state = {
+    inventory: [],
+    sales: [],
+    watchlist: [],
+    notes: "",
+    goal: 200,
+    lastExportAt: null,
+    settings: JSON.parse(JSON.stringify(defaultSettings))
+  };
+
+  function mergeSettings(parsed){
+    state.settings = Object.assign(JSON.parse(JSON.stringify(defaultSettings)), parsed.settings || {});
+    state.settings.platformFees = Object.assign({}, defaultSettings.platformFees, (parsed.settings||{}).platformFees || {});
+    state.settings.marginThresholds = Object.assign({}, defaultSettings.marginThresholds, (parsed.settings||{}).marginThresholds || {});
+  }
+  async function load(){
+    // 1) essaie de lire depuis IndexedDB (nouveau système, grande capacité)
+    try{
+      const fromIDB = await idbGetState();
+      if(fromIDB){
+        state = Object.assign(state, fromIDB);
+        mergeSettings(fromIDB);
+        return;
+      }
+    }catch(e){ console.warn("Lecture IndexedDB impossible", e); }
+
+    // 2) rien en IndexedDB : on récupère l'ancien contenu localStorage (lecture seule, jamais bloquée par le quota)
+    // et on le migre définitivement vers IndexedDB.
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        state = Object.assign(state, parsed);
+        mergeSettings(parsed);
+        await idbSetState(state);
+        try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      }
+    }catch(e){ console.warn("Lecture localStorage impossible", e); }
+  }
+  function save(){
+    idbSetState(state);
+    return true;
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+  function fmtEur(n){
+    const v = Number(n)||0;
+    return v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+  }
+  function fmtDate(d){
+    if(!d) return "—";
+    const parts = d.split("-");
+    if(parts.length!==3) return d;
+    return parts[2]+"/"+parts[1]+"/"+parts[0];
+  }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastUndoBtn').style.display = 'none';
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+  function showUndoToast(msg, undoFn){
+    const t = document.getElementById('toast');
+    const btn = document.getElementById('toastUndoBtn');
+    document.getElementById('toastMsg').textContent = msg;
+    btn.style.display = 'inline';
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    const cleanup = ()=>{ t.classList.remove('show'); btn.onclick = null; };
+    btn.onclick = ()=>{ undoFn(); cleanup(); clearTimeout(showToast._t); };
+    showToast._t = setTimeout(cleanup, 5000);
+  }
+  function stateTagClass(s){
+    const map = { 'Mint':'tag-mt', 'Near Mint':'tag-nm', 'Excellent':'tag-ex', 'Good':'tag-gd', 'Light Played':'tag-lp', 'Played':'tag-pl', 'Poor':'tag-po' };
+    return map[s] || '';
+  }
+  function statusLabel(s){
+    return {prepared:'Préparé', shipped:'Expédié', delivered:'Livré', dispute:'Litige'}[s] || 'Préparé';
+  }
+  function statusTagClass(s){
+    return {prepared:'tag-prepared', shipped:'tag-shipped', delivered:'tag-delivered', dispute:'tag-dispute'}[s] || 'tag-prepared';
+  }
+  function trackingUrlFor(carrier, tracking){
+    if(!tracking || !tracking.trim()) return null;
+    const t = encodeURIComponent(tracking.trim());
+    const map = {
+      'Colissimo': `https://www.laposte.fr/outils/suivre-vos-envois?code=${t}`,
+      'Lettre suivie': `https://www.laposte.fr/outils/suivre-vos-envois?code=${t}`,
+      'Mondial Relay': `https://www.mondialrelay.fr/suivi-de-colis?numeroExpedition=${t}`,
+      'Chronopost': `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${t}`
+    };
+    // Vinted Go et les transporteurs non reconnus : recherche directe, faute de suivi public standardisé
+    return map[carrier] || `https://www.google.com/search?q=${t}+suivi+colis`;
+  }
+  function escapeHtml(s){
+    return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function marginInfo(pct){
+    const t = state.settings.marginThresholds;
+    if(pct < t.low) return { cls:'red', label:'Marge faible', comment:'Mieux vaut négocier le prix ou décliner, sauf si tu as besoin de vider ce stock.' };
+    if(pct < t.high) return { cls:'orange', label:'Marge correcte', comment:'Ça reste jouable, sans être exceptionnel.' };
+    return { cls:'green', label:'Bonne marge', comment:'Cette offre vaut clairement le coup.' };
+  }
+  function marginBadgeHtml(pct){
+    const info = marginInfo(pct);
+    return `<span class="margin-badge ${info.cls}"><span class="margin-dot"></span>${info.label} · ${pct.toFixed(0)}%</span>`;
+  }
+
+  /* ---------- NAVIGATION ---------- */
+  const titles = {
+    dashboard: ["Dashboard", "Vue d'ensemble de ton activité achat-revente"],
+    stats: ["Statistiques", "CA et achats, mois par mois et année par année"],
+    simulateur: ["Simulateur de rentabilité", "Vérifie une offre avant de l'accepter"],
+    achats: ["Achats", "Cartes en stock, groupées par mois"],
+    ventes: ["Ventes", "Marge nette après tous les frais"],
+    livraisons: ["Livraisons", "Suivi des colis expédiés"],
+    watchlist: ["Watchlist", "Cartes repérées avant achat"],
+    notes: ["Notes & stratégie", "Ton carnet de bord personnel"],
+    parametres: ["Paramètres", "Statut, fiscalité et coûts par défaut"]
+  };
+  function goTo(view){
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+    document.querySelectorAll('.more-sheet-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+    document.getElementById('moreTabBtn').classList.toggle('active', secondaryViews.includes(view));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+    document.getElementById('topTitle').textContent = titles[view][0];
+    document.getElementById('topSub').textContent = titles[view][1];
+  }
+  const secondaryViews = ['stats','livraisons','watchlist','notes','parametres'];
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn=>btn.addEventListener('click', ()=>goTo(btn.dataset.view)));
+  document.querySelectorAll('[data-goto]').forEach(btn=>btn.addEventListener('click', ()=>goTo(btn.dataset.goto)));
+
+  /* ---------- MORE SHEET (mobile) ---------- */
+  const moreSheet = document.getElementById('moreSheet');
+  const moreSheetBackdrop = document.getElementById('moreSheetBackdrop');
+  function openMoreSheet(){ moreSheet.classList.add('open'); moreSheetBackdrop.classList.add('open'); }
+  function closeMoreSheet(){ moreSheet.classList.remove('open'); moreSheetBackdrop.classList.remove('open'); }
+  document.getElementById('moreTabBtn').addEventListener('click', openMoreSheet);
+  document.getElementById('closeMoreSheet').addEventListener('click', closeMoreSheet);
+  moreSheetBackdrop.addEventListener('click', closeMoreSheet);
+  document.querySelectorAll('.more-sheet-item').forEach(btn=>btn.addEventListener('click', ()=>{
+    goTo(btn.dataset.view);
+    closeMoreSheet();
+  }));
+
+  /* ---------- THEME ---------- */
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('themeIcon');
+    icon.innerHTML = theme === 'dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+    localStorage.setItem(THEME_KEY, theme);
+  }
+  document.getElementById('themeToggle').addEventListener('click', ()=>{
+    const current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---------- MODALS ---------- */
+  function openModal(id){ document.getElementById(id).classList.add('active'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+  document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click', ()=>closeModal(btn.dataset.close)));
+  document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click', (e)=>{ if(e.target===ov) ov.classList.remove('active'); }));
+
+  /* ---------- ACHAT (création + édition) ---------- */
+  let pendingImage = null;
+  let pendingImageChanged = false; // true si l'utilisateur a choisi/retiré une photo pendant cette session de modale
+  let originalImageId = null; // imageId présent à l'ouverture (mode édition), pour savoir quoi remplacer/supprimer
+  let editingCardId = null;
+  function resetImagePicker(){
+    pendingImage = null;
+    pendingImageChanged = true;
+    document.getElementById('f-image-preview').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:20px; height:20px; color:var(--text-3);"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+    document.getElementById('f-image-clear').style.display = 'none';
+    document.getElementById('f-image').value = '';
+  }
+  function setImagePreview(dataUrl, isExisting){
+    pendingImage = dataUrl;
+    pendingImageChanged = !isExisting;
+    document.getElementById('f-image-preview').innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+    document.getElementById('f-image-clear').style.display = 'inline-flex';
+  }
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = (evt)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let { width, height } = img;
+          if(width > height && width > maxDim){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+          else if(height > maxDim){ width = Math.round(width * (maxDim/height)); height = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = evt.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  document.getElementById('f-image-btn').addEventListener('click', ()=>document.getElementById('f-image').click());
+  document.getElementById('f-image-clear').addEventListener('click', resetImagePicker);
+  document.getElementById('f-image').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 8*1024*1024){ showToast("Image trop lourde (max 8 Mo en entrée)"); e.target.value=''; return; }
+    compressImage(file, 260, 0.6).then(dataUrl=>{
+      setImagePreview(dataUrl);
+    }).catch(()=>{
+      showToast("Impossible de traiter cette image");
+    });
+  });
+
+  document.getElementById('quickBuyBtn').addEventListener('click', ()=>{
+    editingCardId = null;
+    document.getElementById('cardModalTitle').textContent = 'Nouvel achat';
+    document.getElementById('saveCardBtn').textContent = 'Ajouter au stock';
+    document.getElementById('deleteCardFromModalBtn').style.display = 'none';
+    document.getElementById('cardModalFoot').classList.remove('justify-between');
+    document.getElementById('f-name').value='';
+    document.getElementById('f-set').value='';
+    document.getElementById('f-state').value='Near Mint';
+    document.getElementById('f-buy').value='';
+    document.getElementById('f-buyfees').value='';
+    document.getElementById('f-buydate').value=todayISO();
+    document.getElementById('f-target').value='';
+    originalImageId = null;
+    resetImagePicker();
+    openModal('cardModal');
+  });
+
+  function openCardEdit(id){
+    const c = state.inventory.find(x=>x.id===id);
+    if(!c) return;
+    editingCardId = id;
+    document.getElementById('cardModalTitle').textContent = 'Modifier la carte';
+    document.getElementById('saveCardBtn').textContent = 'Enregistrer les modifications';
+    document.getElementById('deleteCardFromModalBtn').style.display = 'inline-flex';
+    document.getElementById('cardModalFoot').classList.add('justify-between');
+    document.getElementById('f-name').value = c.name;
+    document.getElementById('f-set').value = c.set||'';
+    document.getElementById('f-state').value = c.state||'Near Mint';
+    document.getElementById('f-buy').value = c.buyPrice||'';
+    document.getElementById('f-buyfees').value = c.buyFees||'';
+    document.getElementById('f-buydate').value = c.buyDate||todayISO();
+    document.getElementById('f-target').value = c.target||'';
+    originalImageId = ensureImageId(c);
+    const existingSrc = getImageSrc(c);
+    if(existingSrc) setImagePreview(existingSrc, true); else resetImagePicker();
+    openModal('cardModal');
+  }
+  document.getElementById('deleteCardFromModalBtn').addEventListener('click', ()=>{
+    if(!editingCardId) return;
+    deleteCard(editingCardId);
+    closeModal('cardModal');
+  });
+
+  document.getElementById('saveCardBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('f-name').value.trim();
+    if(!name){ showToast("Ajoute au moins un nom de carte"); return; }
+
+    // Résolution de l'image : IndexedDB uniquement, jamais de base64 dans le state sauvegardé
+    let finalImageId = originalImageId;
+    if(pendingImageChanged){
+      if(pendingImage){
+        finalImageId = uid();
+        imageCache[finalImageId] = pendingImage;
+        idbSet(finalImageId, pendingImage);
+        if(originalImageId) idbDelete(originalImageId);
+      } else {
+        finalImageId = null;
+        if(originalImageId) idbDelete(originalImageId);
+      }
+    }
+
+    const fields = {
+      name,
+      set: document.getElementById('f-set').value.trim(),
+      state: document.getElementById('f-state').value,
+      buyPrice: parseFloat(document.getElementById('f-buy').value)||0,
+      buyFees: parseFloat(document.getElementById('f-buyfees').value)||0,
+      buyDate: document.getElementById('f-buydate').value || todayISO(),
+      target: parseFloat(document.getElementById('f-target').value)||0,
+      imageId: finalImageId,
+      image: null
+    };
+    if(editingCardId){
+      const idx = state.inventory.findIndex(x=>x.id===editingCardId);
+      if(idx>-1) state.inventory[idx] = Object.assign({}, state.inventory[idx], fields);
+      showToast("Carte mise à jour");
+    } else {
+      state.inventory.unshift(Object.assign({ id: uid() }, fields));
+      showToast("Achat enregistré");
+    }
+    save(); renderAll();
+    closeModal('cardModal');
+  });
+
+
+  /* ---------- VENTE ---------- */
+  let sellMode = 'single';
+  let selectedSaleCardId = null;
+  let selectedLotIds = new Set();
+
+  function populatePlatformSelect(){
+    const sel = document.getElementById('s-platform');
+    sel.innerHTML = Object.keys(state.settings.platformFees).map(p=>`<option value="${p}">${p}</option>`).join('');
+  }
+
+  document.querySelectorAll('.sell-mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      sellMode = btn.dataset.mode;
+      document.querySelectorAll('.sell-mode-btn').forEach(b=>{
+        b.classList.toggle('active', b===btn);
+        b.classList.toggle('btn-primary', b===btn);
+      });
+      document.getElementById('sell-single-picker').style.display = sellMode==='single' ? 'block' : 'none';
+      document.getElementById('sell-lot-picker').style.display = sellMode==='lot' ? 'block' : 'none';
+      document.getElementById('s-price-label').textContent = sellMode==='lot' ? 'Prix de vente du lot (€)' : 'Prix de vente (€)';
+      if(sellMode==='lot'){
+        renderLotResults('');
+        updateLotSummary();
+      }
+      updateSellBreakdown();
+    });
+  });
+
+  // ----- Mode carte unique -----
+  function currentSellCard(){
+    return state.inventory.find(c=>c.id===selectedSaleCardId);
+  }
+  function renderSaleCardResults(query){
+    const box = document.getElementById('s-card-results');
+    const q = (query||'').trim().toLowerCase();
+    let matches = state.inventory;
+    if(q) matches = matches.filter(c=> c.name.toLowerCase().includes(q) || (c.set||'').toLowerCase().includes(q));
+    matches = matches.slice(0, 30);
+    if(matches.length===0){
+      box.innerHTML = `<div style="padding:14px; font-size:12.5px; color:var(--text-2); text-align:center;">Aucune carte trouvée</div>`;
+    } else {
+      box.innerHTML = matches.map(c=>`
+        <div class="sale-result-row" data-id="${c.id}" style="display:flex; align-items:center; gap:10px; padding:9px 10px; cursor:pointer; border-bottom:1px solid var(--border);">
+          ${cardThumb(c,36)}
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.name)}</div>
+            <div style="font-size:11px; color:var(--text-2);">${escapeHtml(c.set||'—')}</div>
+          </div>
+          <div class="mono" style="font-size:12.5px; font-weight:700; flex-shrink:0;">${fmtEur(c.buyPrice+c.buyFees)}</div>
+        </div>
+      `).join('');
+      box.querySelectorAll('.sale-result-row').forEach(row=>row.addEventListener('click', ()=>selectSaleCard(row.dataset.id)));
+    }
+    box.style.display = 'block';
+  }
+  function selectSaleCard(id){
+    selectedSaleCardId = id;
+    const card = currentSellCard();
+    document.getElementById('s-card-results').style.display = 'none';
+    document.getElementById('s-card-search').style.display = 'none';
+    const sel = document.getElementById('s-card-selected');
+    sel.style.display = 'flex';
+    document.getElementById('s-card-selected-thumb').innerHTML = cardThumb(card,40);
+    document.getElementById('s-card-selected-name').textContent = card.name;
+    document.getElementById('s-card-selected-sub').textContent = (card.set||'—');
+    document.getElementById('s-price').value = card.target || '';
+    updateCommissionFromPlatform();
+  }
+  document.getElementById('s-card-change').addEventListener('click', ()=>{
+    selectedSaleCardId = null;
+    document.getElementById('s-card-selected').style.display = 'none';
+    const input = document.getElementById('s-card-search');
+    input.style.display = 'block';
+    input.value = '';
+    input.focus();
+    renderSaleCardResults('');
+  });
+  document.getElementById('s-card-search').addEventListener('input', (e)=> renderSaleCardResults(e.target.value));
+  document.getElementById('s-card-search').addEventListener('focus', (e)=> renderSaleCardResults(e.target.value));
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('#s-card-search') && !e.target.closest('#s-card-results')){
+      document.getElementById('s-card-results').style.display = 'none';
+    }
+  });
+
+  // ----- Mode lot -----
+  function renderLotResults(query){
+    const box = document.getElementById('s-lot-results');
+    const q = (query||'').trim().toLowerCase();
+    let matches = state.inventory;
+    if(q) matches = matches.filter(c=> c.name.toLowerCase().includes(q) || (c.set||'').toLowerCase().includes(q));
+    matches = matches.slice(0, 60);
+    if(matches.length===0){
+      box.innerHTML = `<div style="padding:14px; font-size:12.5px; color:var(--text-2); text-align:center;">Aucune carte trouvée</div>`;
+      return;
+    }
+    box.innerHTML = matches.map(c=>{
+      const checked = selectedLotIds.has(c.id);
+      return `<div class="lot-row" data-id="${c.id}" style="display:flex; align-items:center; gap:10px; padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--border); ${checked ? 'background:var(--accent-soft);' : ''}">
+        <div style="width:20px; height:20px; border-radius:6px; border:2px solid ${checked?'var(--accent)':'var(--border)'}; background:${checked?'var(--accent)':'transparent'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          ${checked ? '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+        </div>
+        ${cardThumb(c,34)}
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:600; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.name)}</div>
+          <div style="font-size:10.5px; color:var(--text-2);">${escapeHtml(c.set||'—')}</div>
+        </div>
+        <div class="mono" style="font-size:12px; font-weight:700; flex-shrink:0;">${fmtEur(c.buyPrice+c.buyFees)}</div>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('.lot-row').forEach(row=>row.addEventListener('click', ()=>{
+      const id = row.dataset.id;
+      if(selectedLotIds.has(id)) selectedLotIds.delete(id); else selectedLotIds.add(id);
+      renderLotResults(document.getElementById('s-lot-search').value);
+      updateLotSummary();
+      updateSellBreakdown();
+    }));
+  }
+  function updateLotSummary(){
+    const items = state.inventory.filter(c=>selectedLotIds.has(c.id));
+    const total = items.reduce((s,c)=>s+c.buyPrice+c.buyFees,0);
+    document.getElementById('s-lot-count').textContent = items.length + (items.length>1 ? ' cartes sélectionnées' : ' carte sélectionnée');
+    document.getElementById('s-lot-total').textContent = fmtEur(total);
+  }
+  document.getElementById('s-lot-search').addEventListener('input', (e)=>renderLotResults(e.target.value));
+
+  function getSaleBasis(){
+    if(sellMode==='lot'){
+      const items = state.inventory.filter(c=>selectedLotIds.has(c.id));
+      const imgItem = items.find(c=>c.imageId || c.image);
+      return {
+        valid: items.length>0,
+        buyPrice: items.reduce((s,c)=>s+c.buyPrice,0),
+        buyFees: items.reduce((s,c)=>s+c.buyFees,0),
+        name: document.getElementById('s-lot-name').value.trim() || `Lot de ${items.length} carte${items.length>1?'s':''}`,
+        set: items.length ? `${items.length} carte${items.length>1?'s':''}` : '',
+        imageId: imgItem ? ensureImageId(imgItem) : null,
+        ids: items.map(c=>c.id)
+      };
+    }
+    const card = currentSellCard();
+    return card ? {
+      valid: true, buyPrice: card.buyPrice, buyFees: card.buyFees,
+      name: card.name, set: card.set, imageId: ensureImageId(card), ids: [card.id]
+    } : { valid:false, buyPrice:0, buyFees:0, name:'', set:'', imageId:null, ids:[] };
+  }
+
+  function updateCommissionFromPlatform(){
+    const platform = document.getElementById('s-platform').value;
+    const pct = state.settings.platformFees[platform] ?? 0;
+    document.getElementById('s-commission-pct').value = pct;
+    updateSellBreakdown();
+  }
+  function updateSellBreakdown(){
+    const basis = getSaleBasis();
+    const price = parseFloat(document.getElementById('s-price').value)||0;
+    const pct = parseFloat(document.getElementById('s-commission-pct').value)||0;
+    const shipping = parseFloat(document.getElementById('s-shipping').value)||0;
+    const packaging = parseFloat(document.getElementById('s-packaging').value)||0;
+    const commission = price * pct/100;
+    const buyPrice = basis.buyPrice;
+    const buyFees = basis.buyFees;
+    const urssaf = state.settings.autoEntrepreneur ? price * state.settings.urssafRate/100 : 0;
+    const net = price - buyPrice - buyFees - commission - shipping - packaging - urssaf;
+    const costBasis = buyPrice + buyFees;
+    const marginPct = costBasis > 0 ? (net/costBasis)*100 : (price>0 ? (net/price)*100 : 0);
+    const info = marginInfo(marginPct);
+    const box = document.getElementById('sellBreakdown');
+    box.innerHTML = `
+      <div class="breakdown-row"><span>Prix de vente</span><span class="mono">${fmtEur(price)}</span></div>
+      <div class="breakdown-row"><span>− Prix d'achat + frais${sellMode==='lot' ? ' (total lot)' : ''}</span><span class="mono neg">− ${fmtEur(buyPrice+buyFees)}</span></div>
+      <div class="breakdown-row"><span>− Commission plateforme (${pct}%)</span><span class="mono neg">− ${fmtEur(commission)}</span></div>
+      <div class="breakdown-row"><span>− Port + emballage</span><span class="mono neg">− ${fmtEur(shipping+packaging)}</span></div>
+      ${state.settings.autoEntrepreneur ? `<div class="breakdown-row"><span>− URSSAF (${state.settings.urssafRate}%)</span><span class="mono neg">− ${fmtEur(urssaf)}</span></div>` : ''}
+      <div class="breakdown-row total"><span>Marge nette réelle</span><span class="mono ${net>=0?'pos':'neg'}">${net>=0?'+':''}${fmtEur(net)}</span></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; margin-top:2px; border-top:1px dashed var(--border);">
+        ${marginBadgeHtml(marginPct)}
+        <span style="font-size:11px; color:var(--text-2); max-width:180px; text-align:right;">${info.comment}</span>
+      </div>
+    `;
+  }
+  ['s-price','s-commission-pct','s-shipping','s-packaging'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateSellBreakdown);
+  });
+  document.getElementById('s-lot-name').addEventListener('input', updateSellBreakdown);
+  document.getElementById('s-platform').addEventListener('change', updateCommissionFromPlatform);
+
+  function resetSellModeToSingle(){
+    sellMode = 'single';
+    document.querySelectorAll('.sell-mode-btn').forEach(b=>{
+      const isSingle = b.dataset.mode==='single';
+      b.classList.toggle('active', isSingle);
+      b.classList.toggle('btn-primary', isSingle);
+    });
+    document.getElementById('sell-single-picker').style.display = 'block';
+    document.getElementById('sell-lot-picker').style.display = 'none';
+    document.getElementById('s-price-label').textContent = 'Prix de vente (€)';
+    selectedLotIds = new Set();
+    document.getElementById('s-lot-name').value = '';
+    document.getElementById('s-lot-search').value = '';
+  }
+
+  function openSell(id){
+    if(state.inventory.length===0){ showToast("Ajoute d'abord un achat"); return; }
+    populatePlatformSelect();
+    resetSellModeToSingle();
+    document.getElementById('s-shipping').value = state.settings.shippingDefault || '';
+    document.getElementById('s-packaging').value = state.settings.packagingDefault || '';
+    document.getElementById('s-date').value = todayISO();
+    document.getElementById('s-carrier').value = '';
+    document.getElementById('s-buyer').value = '';
+    document.getElementById('s-tracking').value = '';
+    document.getElementById('s-status').value = 'prepared';
+    document.getElementById('s-card-results').style.display = 'none';
+    if(id){
+      selectSaleCard(id);
+    } else {
+      selectedSaleCardId = null;
+      document.getElementById('s-card-selected').style.display = 'none';
+      const input = document.getElementById('s-card-search');
+      input.style.display = 'block';
+      input.value = '';
+      document.getElementById('s-price').value = '';
+      updateCommissionFromPlatform();
+    }
+    openModal('sellModal');
+  }
+  document.getElementById('quickSellBtn').addEventListener('click', ()=>openSell(null));
+
+  document.getElementById('confirmSellBtn').addEventListener('click', ()=>{
+    const basis = getSaleBasis();
+    if(!basis.valid){ showToast(sellMode==='lot' ? "Sélectionne au moins une carte pour le lot" : "Choisis une carte dans ton stock"); return; }
+    const price = parseFloat(document.getElementById('s-price').value)||0;
+    const pct = parseFloat(document.getElementById('s-commission-pct').value)||0;
+    const shipping = parseFloat(document.getElementById('s-shipping').value)||0;
+    const packaging = parseFloat(document.getElementById('s-packaging').value)||0;
+    const commission = price * pct/100;
+    const urssaf = state.settings.autoEntrepreneur ? price * state.settings.urssafRate/100 : 0;
+    const margin = price - basis.buyPrice - basis.buyFees - commission - shipping - packaging - urssaf;
+    state.sales.unshift({
+      id: uid(), name: basis.name, set: basis.set, imageId: basis.imageId,
+      isLot: sellMode==='lot', lotCount: basis.ids.length,
+      buyPrice: basis.buyPrice, buyFees: basis.buyFees,
+      sellPrice: price, platform: document.getElementById('s-platform').value,
+      commissionPct: pct, commission, shipping, packaging, urssaf, margin,
+      sellDate: document.getElementById('s-date').value || todayISO(),
+      buyerName: document.getElementById('s-buyer').value.trim(),
+      carrier: document.getElementById('s-carrier').value,
+      tracking: document.getElementById('s-tracking').value.trim(),
+      shipStatus: document.getElementById('s-status').value
+    });
+    state.inventory = state.inventory.filter(c=>!basis.ids.includes(c.id));
+    save(); renderAll();
+    closeModal('sellModal');
+    showToast(sellMode==='lot' ? "Vente du lot enregistrée" : "Vente enregistrée");
+  });
+
+  function deleteCard(id){
+    const idx = state.inventory.findIndex(c=>c.id===id);
+    if(idx===-1) return;
+    const removed = state.inventory[idx];
+    state.inventory.splice(idx,1);
+    save(); renderAll();
+    showUndoToast("Achat supprimé", ()=>{
+      state.inventory.splice(idx,0,removed);
+      save(); renderAll();
+    });
+  }
+  function deleteSale(id){
+    const idx = state.sales.findIndex(s=>s.id===id);
+    if(idx===-1) return;
+    const removed = state.sales[idx];
+    state.sales.splice(idx,1);
+    save(); renderAll();
+    showUndoToast("Vente supprimée", ()=>{
+      state.sales.splice(idx,0,removed);
+      save(); renderAll();
+    });
+  }
+
+  /* ---------- LIVRAISONS ---------- */
+  let shippingId = null;
+  function updateShipTrackLink(){
+    const carrier = document.getElementById('sh-carrier').value;
+    const tracking = document.getElementById('sh-tracking').value;
+    const link = document.getElementById('sh-track-link');
+    const url = trackingUrlFor(carrier, tracking);
+    if(url){ link.href = url; link.style.display = 'inline-block'; }
+    else { link.style.display = 'none'; }
+  }
+  document.getElementById('sh-carrier').addEventListener('change', updateShipTrackLink);
+  document.getElementById('sh-tracking').addEventListener('input', updateShipTrackLink);
+
+  function openShip(id){
+    const sale = state.sales.find(s=>s.id===id);
+    if(!sale) return;
+    shippingId = id;
+    document.getElementById('shipCardName').textContent = sale.name + (sale.set ? " · "+sale.set : "");
+    document.getElementById('sh-buyer').value = sale.buyerName || '';
+    document.getElementById('sh-carrier').value = sale.carrier || '';
+    document.getElementById('sh-tracking').value = sale.tracking || '';
+    document.getElementById('sh-status').value = sale.shipStatus || 'prepared';
+    document.getElementById('sh-date').value = sale.sellDate || todayISO();
+    updateShipTrackLink();
+    openModal('shipModal');
+  }
+  document.getElementById('saveShipBtn').addEventListener('click', ()=>{
+    const sale = state.sales.find(s=>s.id===shippingId);
+    if(!sale) return;
+    sale.buyerName = document.getElementById('sh-buyer').value.trim();
+    sale.carrier = document.getElementById('sh-carrier').value;
+    sale.tracking = document.getElementById('sh-tracking').value.trim();
+    sale.shipStatus = document.getElementById('sh-status').value;
+    save(); renderAll();
+    closeModal('shipModal');
+    showToast("Suivi mis à jour");
+  });
+
+  /* ---------- WATCHLIST ---------- */
+  document.getElementById('addWatchBtn').addEventListener('click', ()=>{
+    document.getElementById('w-name').value='';
+    document.getElementById('w-price').value='';
+    document.getElementById('w-where').value='';
+    document.getElementById('w-note').value='';
+    openModal('watchModal');
+  });
+  document.getElementById('saveWatchBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('w-name').value.trim();
+    if(!name){ showToast("Ajoute au moins un nom de carte"); return; }
+    state.watchlist.unshift({
+      id: uid(), name,
+      price: parseFloat(document.getElementById('w-price').value)||0,
+      where: document.getElementById('w-where').value.trim(),
+      note: document.getElementById('w-note').value.trim()
+    });
+    save(); renderAll();
+    closeModal('watchModal');
+    showToast("Ajoutée à la watchlist");
+  });
+  function deleteWatch(id){
+    const idx = state.watchlist.findIndex(w=>w.id===id);
+    if(idx===-1) return;
+    const removed = state.watchlist[idx];
+    state.watchlist.splice(idx,1);
+    save(); renderAll();
+    showUndoToast("Retirée de la watchlist", ()=>{
+      state.watchlist.splice(idx,0,removed);
+      save(); renderAll();
+    });
+  }
+  function watchToInventory(id){
+    const w = state.watchlist.find(x=>x.id===id);
+    if(!w) return;
+    state.inventory.unshift({ id: uid(), name: w.name, set:'', state:'Near Mint', buyPrice: w.price, buyFees:0, buyDate: todayISO(), target: 0 });
+    state.watchlist = state.watchlist.filter(x=>x.id!==id);
+    save(); renderAll();
+    showToast("Déplacée vers les achats");
+  }
+
+  /* ---------- NOTES ---------- */
+  const notesArea = document.getElementById('notesArea');
+  let notesTimer = null;
+  notesArea.addEventListener('input', ()=>{
+    clearTimeout(notesTimer);
+    notesTimer = setTimeout(()=>{ state.notes = notesArea.value; save(); }, 400);
+  });
+
+  /* ---------- GOAL ---------- */
+  const goalInput = document.getElementById('goalInput');
+  goalInput.addEventListener('change', ()=>{ state.goal = parseFloat(goalInput.value)||0; save(); renderDashboard(); });
+
+  /* ---------- PARAMÈTRES ---------- */
+  const pAutoent = document.getElementById('p-autoent');
+  const pUrssafRate = document.getElementById('p-urssafrate');
+  const pPackaging = document.getElementById('p-packaging');
+  const pShipping = document.getElementById('p-shipping');
+  const pThreshLow = document.getElementById('p-threshlow');
+  const pThreshHigh = document.getElementById('p-threshhigh');
+
+  async function renderStorageDiag(){
+    const box = document.getElementById('storageDiagBox');
+    if(!box) return;
+    let lines = [];
+    lines.push(`Cartes en stock : ${state.inventory.length}`);
+    lines.push(`Ventes enregistrées : ${state.sales.length}`);
+    lines.push(`Photos stockées : ${Object.keys(imageCache).length}`);
+    try{
+      if(navigator.storage && navigator.storage.estimate){
+        const est = await navigator.storage.estimate();
+        const usedMB = ((est.usage||0)/1024/1024).toFixed(1);
+        const quotaMB = ((est.quota||0)/1024/1024).toFixed(0);
+        lines.push(`Stockage utilisé : ${usedMB} Mo (sur ${quotaMB} Mo disponibles, estimation navigateur)`);
+      } else {
+        lines.push(`Estimation du stockage non disponible sur ce navigateur`);
+      }
+    }catch(e){ lines.push('Estimation du stockage indisponible'); }
+    box.innerHTML = lines.map(l=>`<div>${l}</div>`).join('');
+  }
+  document.getElementById('refreshDiagBtn').addEventListener('click', renderStorageDiag);
+  document.getElementById('resetStorageBtn').addEventListener('click', async ()=>{
+    if(!confirm("Ça va supprimer TOUTES tes données sur cet appareil (sauf ce que tu as exporté). Continuer ?")) return;
+    try{
+      const db = await openIDB();
+      await new Promise((resolve)=>{
+        const tx = db.transaction([IDB_STORE, IDB_STATE_STORE], 'readwrite');
+        tx.objectStore(IDB_STORE).clear();
+        tx.objectStore(IDB_STATE_STORE).clear();
+        tx.oncomplete = resolve;
+        tx.onerror = resolve;
+      });
+    }catch(e){ console.warn(e); }
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    location.reload();
+  });
+
+  function renderSettingsForm(){
+    pAutoent.checked = !!state.settings.autoEntrepreneur;
+    pUrssafRate.value = state.settings.urssafRate;
+    document.getElementById('urssafRateRow').style.opacity = state.settings.autoEntrepreneur ? '1' : '.45';
+    pPackaging.value = state.settings.packagingDefault;
+    pShipping.value = state.settings.shippingDefault;
+    pThreshLow.value = state.settings.marginThresholds.low;
+    pThreshHigh.value = state.settings.marginThresholds.high;
+
+    const body = document.getElementById('platformFeesBody');
+    body.innerHTML = Object.entries(state.settings.platformFees).map(([name,pct])=>`
+      <div class="field-row" style="align-items:end; grid-template-columns:1fr 110px;">
+        <div class="field"><label>${escapeHtml(name)}</label></div>
+        <div class="field"><input type="number" step="0.1" class="pf-input" data-platform="${escapeHtml(name)}" value="${pct}"></div>
+      </div>
+    `).join('');
+    body.querySelectorAll('.pf-input').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        state.settings.platformFees[inp.dataset.platform] = parseFloat(inp.value)||0;
+        save();
+      });
+    });
+    renderStorageDiag();
+  }
+  pAutoent.addEventListener('change', ()=>{
+    state.settings.autoEntrepreneur = pAutoent.checked;
+    save(); renderSettingsForm(); renderDashboard();
+  });
+  pUrssafRate.addEventListener('change', ()=>{ state.settings.urssafRate = parseFloat(pUrssafRate.value)||0; save(); renderDashboard(); });
+  pPackaging.addEventListener('change', ()=>{ state.settings.packagingDefault = parseFloat(pPackaging.value)||0; save(); });
+  pShipping.addEventListener('change', ()=>{ state.settings.shippingDefault = parseFloat(pShipping.value)||0; save(); });
+  pThreshLow.addEventListener('change', ()=>{ state.settings.marginThresholds.low = parseFloat(pThreshLow.value)||0; save(); updateSellBreakdown(); updateSimResult(); });
+  pThreshHigh.addEventListener('change', ()=>{ state.settings.marginThresholds.high = parseFloat(pThreshHigh.value)||0; save(); updateSellBreakdown(); updateSimResult(); });
+
+  /* ---------- SIMULATEUR DE RENTABILITÉ ---------- */
+  function populateSimPlatformSelect(){
+    const sel = document.getElementById('sim-platform');
+    sel.innerHTML = Object.keys(state.settings.platformFees).map(p=>`<option value="${p}">${p}</option>`).join('');
+  }
+  function updateSimCommission(){
+    const platform = document.getElementById('sim-platform').value;
+    document.getElementById('sim-commission-pct').value = state.settings.platformFees[platform] ?? 0;
+    updateSimResult();
+  }
+  function updateSimResult(){
+    const buyPrice = parseFloat(document.getElementById('sim-buy').value)||0;
+    const buyFees = parseFloat(document.getElementById('sim-buyfees').value)||0;
+    const price = parseFloat(document.getElementById('sim-price').value)||0;
+    const pct = parseFloat(document.getElementById('sim-commission-pct').value)||0;
+    const shipping = parseFloat(document.getElementById('sim-shipping').value)||0;
+    const packaging = parseFloat(document.getElementById('sim-packaging').value)||0;
+    const commission = price * pct/100;
+    const urssaf = state.settings.autoEntrepreneur ? price * state.settings.urssafRate/100 : 0;
+    const net = price - buyPrice - buyFees - commission - shipping - packaging - urssaf;
+    const costBasis = buyPrice + buyFees;
+    const hasInput = price>0 || buyPrice>0;
+    const marginPct = costBasis > 0 ? (net/costBasis)*100 : (price>0 ? (net/price)*100 : 0);
+
+    const box = document.getElementById('simResultBox');
+    const pctEl = document.getElementById('simPct');
+    const netEl = document.getElementById('simNet');
+    const commentEl = document.getElementById('simComment');
+    const emojiEl = document.getElementById('simEmoji');
+
+    if(!hasInput){
+      box.className = 'sim-result';
+      emojiEl.textContent = '🤔';
+      pctEl.textContent = '—';
+      netEl.textContent = 'Bénéfice net : 0 €';
+      commentEl.textContent = "Renseigne les champs pour voir le résultat.";
+    } else {
+      const info = marginInfo(marginPct);
+      box.className = 'sim-result ' + info.cls;
+      emojiEl.textContent = info.cls==='green' ? '🚀' : info.cls==='orange' ? '🤏' : '🚫';
+      pctEl.textContent = (marginPct>=0?'+':'') + marginPct.toFixed(0) + '%';
+      netEl.textContent = 'Bénéfice net : ' + (net>=0?'+':'') + fmtEur(net);
+      commentEl.textContent = info.label + ' — ' + info.comment;
+    }
+
+    const bd = document.getElementById('simBreakdown');
+    bd.innerHTML = `
+      <div class="breakdown-row"><span>Prix de vente</span><span class="mono">${fmtEur(price)}</span></div>
+      <div class="breakdown-row"><span>− Prix d'achat + frais</span><span class="mono neg">− ${fmtEur(costBasis)}</span></div>
+      <div class="breakdown-row"><span>− Commission plateforme (${pct}%)</span><span class="mono neg">− ${fmtEur(commission)}</span></div>
+      <div class="breakdown-row"><span>− Port + emballage</span><span class="mono neg">− ${fmtEur(shipping+packaging)}</span></div>
+      ${state.settings.autoEntrepreneur ? `<div class="breakdown-row"><span>− URSSAF (${state.settings.urssafRate}%)</span><span class="mono neg">− ${fmtEur(urssaf)}</span></div>` : ''}
+      <div class="breakdown-row total"><span>Marge nette réelle</span><span class="mono ${net>=0?'pos':'neg'}">${net>=0?'+':''}${fmtEur(net)}</span></div>
+    `;
+  }
+  ['sim-buy','sim-buyfees','sim-price','sim-commission-pct','sim-shipping','sim-packaging'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateSimResult);
+  });
+  document.getElementById('sim-platform').addEventListener('change', updateSimCommission);
+
+  /* ---------- MONTH GROUPING ---------- */
+  function monthKey(dateStr){ return dateStr ? dateStr.slice(0,7) : '0000-00'; }
+  function monthLabel(key){
+    const [y,m] = key.split('-').map(Number);
+    return new Date(y, m-1, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+  }
+  function groupByMonth(items, dateField){
+    const groups = {};
+    items.forEach(item=>{
+      const k = monthKey(item[dateField]);
+      (groups[k] = groups[k] || []).push(item);
+    });
+    return Object.keys(groups).sort().reverse().map(k=>({key:k, label:monthLabel(k), items:groups[k]}));
+  }
+  const collapsedMonths = new Set();
+
+  /* ---------- RENDER: INVENTORY ---------- */
+  function cardThumb(c, size){
+    size = size || 60;
+    const src = getImageSrc(c);
+    return src
+      ? `<img src="${src}" class="stock-thumb" style="width:${size}px; height:${size}px;">`
+      : `<div class="stock-thumb-empty" style="width:${size}px; height:${size}px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:${Math.round(size*0.4)}px; height:${Math.round(size*0.4)}px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+  }
+  function stockRowHtml(c, compact){
+    const tag = `<span class="tag ${stateTagClass(c.state)}">${c.state}</span>`;
+    const thumbSize = compact ? 48 : 60;
+    return `<div class="stock-row" data-id="${c.id}">
+      ${cardThumb(c,thumbSize)}
+      <div class="stock-body">
+        <div class="stock-name">${escapeHtml(c.name)}</div>
+        <div class="stock-sub">${tag}<span>${escapeHtml(c.set||'—')}</span>${compact ? '' : `<span>·</span><span>${fmtDate(c.buyDate)}</span>`}</div>
+      </div>
+      <div class="stock-price">
+        <div class="big">${fmtEur(c.buyPrice+c.buyFees)}</div>
+        <div class="small">cible ${fmtEur(c.target)}</div>
+      </div>
+      ${compact ? '' : `<div class="stock-actions">
+        <button class="btn btn-sm sell-btn" data-id="${c.id}">Vendue</button>
+        <button class="icon-btn del-card" data-id="${c.id}" title="Supprimer" style="width:28px; height:28px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+      </div>`}
+    </div>`;
+  }
+  function wireStockRows(container){
+    container.querySelectorAll('.sell-btn').forEach(b=>b.addEventListener('click', (e)=>{ e.stopPropagation(); openSell(b.dataset.id); }));
+    container.querySelectorAll('.del-card').forEach(b=>b.addEventListener('click', (e)=>{ e.stopPropagation(); deleteCard(b.dataset.id); }));
+    container.querySelectorAll('.stock-row').forEach(row=>row.addEventListener('click', ()=>openCardEdit(row.dataset.id)));
+  }
+
+  function sortItems(items, mode){
+    const arr = items.slice();
+    if(mode==='date-asc') arr.sort((a,b)=>(a.buyDate||'').localeCompare(b.buyDate||''));
+    else if(mode==='name-asc') arr.sort((a,b)=>a.name.localeCompare(b.name));
+    else if(mode==='price-desc') arr.sort((a,b)=>(b.buyPrice+b.buyFees)-(a.buyPrice+a.buyFees));
+    else if(mode==='price-asc') arr.sort((a,b)=>(a.buyPrice+a.buyFees)-(b.buyPrice+b.buyFees));
+    else arr.sort((a,b)=>(b.buyDate||'').localeCompare(a.buyDate||'')); // date-desc default
+    return arr;
+  }
+
+  function renderInventory(){
+    const wrap = document.getElementById('inventoryGroups');
+    const empty = document.getElementById('inventoryEmpty');
+    if(state.inventory.length===0){ wrap.innerHTML=''; empty.style.display='block'; return; }
+
+    const query = (document.getElementById('stockSearch').value||'').trim().toLowerCase();
+    const sortMode = document.getElementById('stockSort').value;
+    let items = state.inventory.filter(c=>{
+      if(!query) return true;
+      return c.name.toLowerCase().includes(query) || (c.set||'').toLowerCase().includes(query) || (c.state||'').toLowerCase().includes(query);
+    });
+
+    if(items.length===0){
+      wrap.innerHTML = `<div class="empty"><p>Aucun résultat pour "${escapeHtml(query)}"</p></div>`;
+      empty.style.display='none';
+      return;
+    }
+    empty.style.display='none';
+
+    if(query || sortMode!=='date-desc'){
+      // flat sorted/filtered list, no month grouping
+      const sorted = sortItems(items, sortMode);
+      wrap.innerHTML = `<div class="panel" style="box-shadow:none; border:none; margin-bottom:0;">${sorted.map(stockRowHtml).join('')}</div>`;
+      wireStockRows(wrap);
+      return;
+    }
+
+    // default view: grouped by month
+    const groups = groupByMonth(items, 'buyDate');
+    wrap.innerHTML = groups.map(g=>{
+      const total = g.items.reduce((s,c)=>s+c.buyPrice+c.buyFees,0);
+      const gid = 'inv-'+g.key;
+      const collapsed = collapsedMonths.has(gid);
+      return `<div class="month-group">
+        <div class="month-head ${collapsed?'collapsed':''}" data-gid="${gid}">
+          <div class="month-head-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <span class="month-title">${g.label}</span>
+            <span class="month-count">· ${g.items.length} carte${g.items.length>1?'s':''}</span>
+          </div>
+          <span class="month-total">${fmtEur(total)}<small>investis (frais inclus)</small></span>
+        </div>
+        <div class="month-table-wrap ${collapsed?'collapsed':''}" data-gid="${gid}">
+          ${sortItems(g.items,'date-desc').map(stockRowHtml).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    wireStockRows(wrap);
+    wrap.querySelectorAll('.month-head').forEach(h=>h.addEventListener('click',()=>{
+      const gid = h.dataset.gid;
+      collapsedMonths.has(gid) ? collapsedMonths.delete(gid) : collapsedMonths.add(gid);
+      renderInventory();
+    }));
+  }
+  document.getElementById('stockSearch').addEventListener('input', renderInventory);
+  document.getElementById('stockSort').addEventListener('change', renderInventory);
+
+  /* ---------- RENDER: SALES ---------- */
+  function saleRowHtml(s){
+    const lotTag = s.isLot ? `<span class="tag" style="background:var(--violet-soft); color:var(--violet-text); border-color:transparent;">Lot ×${s.lotCount}</span>` : '';
+    return `<div class="stock-row" style="cursor:default;">
+      ${cardThumb(s,60)}
+      <div class="stock-body">
+        <div class="stock-name">${escapeHtml(s.name)}</div>
+        <div class="stock-sub">${lotTag}<span>${escapeHtml(s.platform||'—')}</span>${s.buyerName ? `<span>·</span><span>${escapeHtml(s.buyerName)}</span>` : ''}<span>·</span><span>${fmtDate(s.sellDate)}</span></div>
+      </div>
+      <div class="stock-price">
+        <div class="big">${fmtEur(s.sellPrice)}</div>
+        <div class="small ${s.margin>=0?'pos':'neg'}" style="font-weight:700;">${s.margin>=0?'+':''}${fmtEur(s.margin)} net</div>
+      </div>
+      <div class="stock-actions">
+        <button class="icon-btn del-sale" data-id="${s.id}" title="Supprimer" style="width:28px; height:28px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+      </div>
+    </div>`;
+  }
+  function renderSales(){
+    const wrap = document.getElementById('salesGroups');
+    const empty = document.getElementById('salesEmpty');
+    if(state.sales.length===0){ wrap.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    const groups = groupByMonth(state.sales, 'sellDate');
+    wrap.innerHTML = groups.map(g=>{
+      const total = g.items.reduce((s,x)=>s+x.margin,0);
+      const ca = g.items.reduce((s,x)=>s+x.sellPrice,0);
+      const gid = 'sale-'+g.key;
+      const collapsed = collapsedMonths.has(gid);
+      return `<div class="month-group">
+        <div class="month-head ${collapsed?'collapsed':''}" data-gid="${gid}">
+          <div class="month-head-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <span class="month-title">${g.label}</span>
+            <span class="month-count">· ${g.items.length} vente${g.items.length>1?'s':''} · CA ${fmtEur(ca)}</span>
+          </div>
+          <span class="month-total ${total>=0?'pos':'neg'}">${total>=0?'+':''}${fmtEur(total)}<small>marge nette</small></span>
+        </div>
+        <div class="month-table-wrap ${collapsed?'collapsed':''}" data-gid="${gid}">
+          ${g.items.map(saleRowHtml).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('.del-sale').forEach(b=>b.addEventListener('click',(e)=>{ e.stopPropagation(); deleteSale(b.dataset.id); }));
+    wrap.querySelectorAll('.month-head').forEach(h=>h.addEventListener('click',()=>{
+      const gid = h.dataset.gid;
+      collapsedMonths.has(gid) ? collapsedMonths.delete(gid) : collapsedMonths.add(gid);
+      renderSales();
+    }));
+  }
+
+  /* ---------- RENDER: SHIPPING ---------- */
+  function renderShipping(){
+    const body = document.getElementById('shippingBody');
+    const empty = document.getElementById('shippingEmpty');
+    if(state.sales.length===0){ body.innerHTML=''; empty.style.display='block'; return; }
+
+    const query = (document.getElementById('shipSearch').value||'').trim().toLowerCase();
+    const sortMode = document.getElementById('shipSort').value;
+    let items = state.sales.filter(s=>{
+      if(!query) return true;
+      return s.name.toLowerCase().includes(query) || (s.tracking||'').toLowerCase().includes(query) || (s.carrier||'').toLowerCase().includes(query) || (s.buyerName||'').toLowerCase().includes(query);
+    });
+
+    if(items.length===0){
+      body.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-3); padding:24px;">Aucun résultat pour "${escapeHtml(query)}"</td></tr>`;
+      empty.style.display='none';
+      return;
+    }
+    empty.style.display='none';
+
+    const statusOrder = {prepared:0, shipped:1, dispute:2, delivered:3};
+    items = items.slice();
+    if(sortMode==='date-asc') items.sort((a,b)=>(a.sellDate||'').localeCompare(b.sellDate||''));
+    else if(sortMode==='status') items.sort((a,b)=>(statusOrder[a.shipStatus]??9)-(statusOrder[b.shipStatus]??9));
+    else if(sortMode==='name-asc') items.sort((a,b)=>a.name.localeCompare(b.name));
+    else items.sort((a,b)=>(b.sellDate||'').localeCompare(a.sellDate||'')); // date-desc default
+
+    body.innerHTML = items.map(s=>`
+      <tr>
+        <td><div class="cell-name">${escapeHtml(s.name)}</div><div class="cell-sub">${escapeHtml(s.set||'')}</div></td>
+        <td class="cell-sub">${s.buyerName ? `<strong style="color:var(--text);">${escapeHtml(s.buyerName)}</strong> · ` : ''}${escapeHtml(s.platform||'—')} · ${fmtEur(s.sellPrice)}</td>
+        <td>${escapeHtml(s.carrier||'—')}</td>
+        <td class="mono">${s.tracking ? `<a href="${trackingUrlFor(s.carrier, s.tracking)}" target="_blank" rel="noopener" style="color:var(--accent-text); text-decoration:underline;">${escapeHtml(s.tracking)}</a>` : '—'}</td>
+        <td><span class="tag ${statusTagClass(s.shipStatus)}">${statusLabel(s.shipStatus)}</span></td>
+        <td>
+          <div class="row-actions">
+            <span class="cell-sub">${fmtDate(s.sellDate)}</span>
+            <button class="btn btn-sm edit-ship" data-id="${s.id}">Modifier</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    body.querySelectorAll('.edit-ship').forEach(b=>b.addEventListener('click',()=>openShip(b.dataset.id)));
+  }
+  document.getElementById('shipSearch').addEventListener('input', renderShipping);
+  document.getElementById('shipSort').addEventListener('change', renderShipping);
+
+  /* ---------- RENDER: WATCHLIST ---------- */
+  function renderWatchlist(){
+    const body = document.getElementById('watchBody');
+    const empty = document.getElementById('watchEmpty');
+    if(state.watchlist.length===0){ body.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    body.innerHTML = state.watchlist.map(w=>`
+      <tr>
+        <td class="cell-name">${escapeHtml(w.name)}</td>
+        <td class="num">${fmtEur(w.price)}</td>
+        <td class="cell-sub">${escapeHtml(w.where||'—')}</td>
+        <td class="cell-sub">${escapeHtml(w.note||'—')}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-sm buy-watch" data-id="${w.id}">Acheter</button>
+            <button class="icon-btn del-watch" data-id="${w.id}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    body.querySelectorAll('.buy-watch').forEach(b=>b.addEventListener('click',()=>watchToInventory(b.dataset.id)));
+    body.querySelectorAll('.del-watch').forEach(b=>b.addEventListener('click',()=>{ deleteWatch(b.dataset.id); }));
+  }
+
+  /* ---------- RENDER: DASHBOARD ---------- */
+  function renderExportReminder(){
+    const box = document.getElementById('exportReminder');
+    const hasData = state.inventory.length>0 || state.sales.length>0;
+    if(!hasData){ box.style.display='none'; return; }
+    let days = null;
+    if(state.lastExportAt){
+      days = Math.floor((Date.now() - new Date(state.lastExportAt).getTime()) / (1000*60*60*24));
+    }
+    if(days===null || days>=7){
+      document.getElementById('exportReminderText').textContent = days===null
+        ? "Tu n'as encore jamais exporté tes données — pense à faire une sauvegarde."
+        : `Dernière sauvegarde il y a ${days} jour${days>1?'s':''} — pense à exporter.`;
+      box.style.display='flex';
+    } else {
+      box.style.display='none';
+    }
+  }
+  document.getElementById('exportReminderBtn').addEventListener('click', doExport);
+
+  function renderDashboard(){
+    renderExportReminder();
+    const invested = state.inventory.reduce((s,c)=>s+c.buyPrice+c.buyFees,0);
+    const ca = state.sales.reduce((s,x)=>s+x.sellPrice,0);
+    const urssafTotal = state.sales.reduce((s,x)=>s+(x.urssaf||0),0);
+    const totalProfit = state.sales.reduce((s,x)=>s+x.margin,0);
+
+    document.getElementById('statInvested').textContent = fmtEur(invested);
+    document.getElementById('statInvestedSub').textContent = state.inventory.length + " carte" + (state.inventory.length>1?'s':'');
+    document.getElementById('statCA').textContent = fmtEur(ca);
+    document.getElementById('statSalesCount').textContent = state.sales.length + " vente" + (state.sales.length>1?'s':'');
+    document.getElementById('statUrssaf').textContent = fmtEur(urssafTotal);
+    document.getElementById('statUrssafSub').textContent = state.settings.autoEntrepreneur ? state.settings.urssafRate+"% du CA" : "Désactivé";
+    document.getElementById('statProfit').textContent = fmtEur(totalProfit);
+
+    const profitDelta = document.getElementById('statProfitDelta');
+    profitDelta.textContent = "après commissions, frais" + (state.settings.autoEntrepreneur ? " & URSSAF" : "");
+    profitDelta.className = 'stat-delta ' + (totalProfit>0 ? 'delta-up' : totalProfit<0 ? 'delta-down' : 'delta-neutral');
+    document.getElementById('profitIconWrap').className = 'stat-icon ' + (totalProfit>=0 ? 'tint-jade' : 'tint-rose');
+
+    const recentBody = document.getElementById('dashInventoryBody');
+    const recent = state.inventory.slice(0,5);
+    recentBody.innerHTML = recent.length ? recent.map(c=>stockRowHtml(c,true)).join('') :
+      `<div class="empty"><p>Aucune carte pour l'instant</p></div>`;
+    wireStockRows(recentBody);
+
+    const now = new Date();
+    const monthProfit = state.sales.filter(s=>{
+      const d = new Date(s.sellDate);
+      return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    }).reduce((s,x)=>s+x.margin,0);
+    const goal = state.goal || 1;
+    const pct = Math.max(0, Math.min(100, (monthProfit/goal)*100));
+    document.getElementById('goalCurrent').textContent = fmtEur(monthProfit);
+    document.getElementById('goalFill').style.width = pct + "%";
+  }
+
+  /* ---------- RENDER: STATISTIQUES (mois par mois / année par année) ---------- */
+  const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  let selectedStatsYear = null;
+
+  function getAvailableYears(){
+    const years = new Set([new Date().getFullYear()]);
+    state.inventory.forEach(c=>{ if(c.buyDate) years.add(parseInt(c.buyDate.slice(0,4),10)); });
+    state.sales.forEach(s=>{ if(s.sellDate) years.add(parseInt(s.sellDate.slice(0,4),10)); });
+    return Array.from(years).sort((a,b)=>b-a);
+  }
+
+  function populateStatsYearSelect(){
+    const sel = document.getElementById('statsYearSelect');
+    const years = getAvailableYears();
+    if(selectedStatsYear===null || !years.includes(selectedStatsYear)) selectedStatsYear = years[0];
+    sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    sel.value = selectedStatsYear;
+  }
+
+  function buildLineChart(months){
+    const w=640, h=210, padL=38, padR=14, padT=16, padB=26;
+    const maxVal = Math.max(1, ...months.map(m=>Math.max(m.achats, m.ca)));
+    const stepX = (w-padL-padR)/11;
+    const yFor = (val)=> h-padB-(val/maxVal)*(h-padT-padB);
+    const ptsCA = months.map((m,i)=>[padL+i*stepX, yFor(m.ca)]);
+    const ptsAchats = months.map((m,i)=>[padL+i*stepX, yFor(m.achats)]);
+    const pathOf = pts => pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    const areaOf = pts => pathOf(pts)+` L${pts[pts.length-1][0].toFixed(1)} ${h-padB} L${pts[0][0].toFixed(1)} ${h-padB} Z`;
+    let grid = '';
+    for(let g=0; g<=3; g++){
+      const y = padT + (h-padT-padB)*g/3;
+      grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w-padR}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`;
+    }
+    const labels = months.map((m,i)=>`<text x="${(padL+i*stepX).toFixed(1)}" y="${h-8}" font-size="9.5" fill="var(--text-3)" text-anchor="middle" font-family="Inter, sans-serif">${MONTH_NAMES[i].slice(0,3)}</text>`).join('');
+    const dotsCA = ptsCA.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="var(--success)"/>`).join('');
+    const dotsAchats = ptsAchats.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="#DB4C77"/>`).join('');
+    return `
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block; min-width:520px;">
+        ${grid}
+        <path d="${areaOf(ptsCA)}" fill="var(--success-soft)" opacity="0.6"/>
+        <path d="${pathOf(ptsAchats)}" fill="none" stroke="#DB4C77" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${pathOf(ptsCA)}" fill="none" stroke="var(--success)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${dotsAchats}${dotsCA}
+        ${labels}
+      </svg>
+      <div style="display:flex; gap:18px; justify-content:center; margin-top:10px; font-size:11.5px; color:var(--text-2); font-weight:600;">
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:50%; background:#DB4C77; display:inline-block;"></span>Achats</span>
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:50%; background:var(--success); display:inline-block;"></span>CA (ventes)</span>
+      </div>
+    `;
+  }
+
+  function renderStats(){
+    populateStatsYearSelect();
+    const year = selectedStatsYear;
+    const months = Array.from({length:12}, (_,i)=>({
+      achats:0, ca:0, margin:0, urssaf:0
+    }));
+    state.inventory.forEach(c=>{
+      if(!c.buyDate) return;
+      const [y,m] = c.buyDate.split('-').map(Number);
+      if(y===year) months[m-1].achats += (c.buyPrice||0)+(c.buyFees||0);
+    });
+    state.sales.forEach(s=>{
+      if(!s.sellDate) return;
+      const [y,m] = s.sellDate.split('-').map(Number);
+      if(y===year){
+        months[m-1].ca += s.sellPrice||0;
+        months[m-1].margin += s.margin||0;
+        months[m-1].urssaf += s.urssaf||0;
+      }
+    });
+    const yearCA = months.reduce((s,m)=>s+m.ca,0);
+    const yearInvested = months.reduce((s,m)=>s+m.achats,0);
+    const yearUrssaf = months.reduce((s,m)=>s+m.urssaf,0);
+    const yearMargin = months.reduce((s,m)=>s+m.margin,0);
+
+    document.getElementById('yearCA').textContent = fmtEur(yearCA);
+    document.getElementById('yearInvested').textContent = fmtEur(yearInvested);
+    document.getElementById('yearUrssaf').textContent = fmtEur(yearUrssaf);
+    const marginEl = document.getElementById('yearMargin');
+    marginEl.textContent = fmtEur(yearMargin);
+    marginEl.className = 'stat-value mono ' + (yearMargin>0?'pos':yearMargin<0?'neg':'');
+
+    const maxVal = Math.max(1, ...months.map(m=>Math.max(m.achats, m.ca)));
+    document.getElementById('statsChart').innerHTML = buildLineChart(months);
+    const body = document.getElementById('statsBody');
+    body.innerHTML = months.map((m,i)=>{
+      const achatsPct = (m.achats/maxVal)*100;
+      const caPct = (m.ca/maxVal)*100;
+      return `<tr>
+        <td class="cell-name">${MONTH_NAMES[i]}</td>
+        <td class="num">${fmtEur(m.achats)}</td>
+        <td class="num">${fmtEur(m.ca)}</td>
+        <td class="num ${m.margin>0?'pos':m.margin<0?'neg':''}">${m.margin!==0?(m.margin>0?'+':'')+fmtEur(m.margin):'—'}</td>
+        <td>
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="height:6px; border-radius:4px; background:var(--accent); width:${achatsPct}%; min-width:${m.achats>0?'3px':'0'};"></div>
+              <span style="font-size:9.5px; color:var(--text-3);">achats</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="height:6px; border-radius:4px; background:var(--success); width:${caPct}%; min-width:${m.ca>0?'3px':'0'};"></div>
+              <span style="font-size:9.5px; color:var(--text-3);">CA</span>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('statsYearSelect').addEventListener('change', (e)=>{
+    selectedStatsYear = parseInt(e.target.value,10);
+    renderStats();
+  });
+
+  function renderAll(){
+    renderDashboard();
+    renderInventory();
+    renderSales();
+    renderShipping();
+    renderWatchlist();
+    renderSettingsForm();
+    renderStats();
+    notesArea.value = state.notes || "";
+    goalInput.value = state.goal || 0;
+  }
+
+  /* ---------- EXPORT / IMPORT ---------- */
+  function doExport(){
+    state.lastExportAt = new Date().toISOString();
+    save();
+    const exportObj = Object.assign({}, state, { _images: imageCache });
+    const blob = new Blob([JSON.stringify(exportObj)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'cardfolio-export-'+todayISO()+'.json'; a.click();
+    URL.revokeObjectURL(url);
+    renderExportReminder();
+    showToast("Export téléchargé (photos incluses)");
+  }
+  function doImport(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt)=>{
+      try{
+        const data = JSON.parse(evt.target.result);
+        const importedImages = data._images || {};
+        delete data._images;
+        state = Object.assign({inventory:[],sales:[],watchlist:[],notes:'',goal:200,settings:JSON.parse(JSON.stringify(defaultSettings))}, data);
+        state.settings = Object.assign(JSON.parse(JSON.stringify(defaultSettings)), data.settings || {});
+        state.settings.platformFees = Object.assign({}, defaultSettings.platformFees, (data.settings||{}).platformFees || {});
+        state.settings.marginThresholds = Object.assign({}, defaultSettings.marginThresholds, (data.settings||{}).marginThresholds || {});
+        Object.entries(importedImages).forEach(([id, dataUrl])=>{
+          imageCache[id] = dataUrl;
+          idbSet(id, dataUrl);
+        });
+        const ok = save();
+        renderAll();
+        if(ok) showToast("Données importées");
+      }catch(err){ showToast("Fichier invalide"); }
+    };
+    reader.readAsText(file);
+  }
+  document.getElementById('exportBtn').addEventListener('click', doExport);
+  document.getElementById('exportBtn2').addEventListener('click', doExport);
+  document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+  document.getElementById('importBtn2').addEventListener('click', ()=>document.getElementById('importFile2').click());
+  document.getElementById('importFile').addEventListener('change', (e)=>{ doImport(e.target.files[0]); e.target.value=''; });
+  document.getElementById('importFile2').addEventListener('change', (e)=>{ doImport(e.target.files[0]); e.target.value=''; });
+
+  /* ---------- INIT ---------- */
+  async function init(){
+    applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+    await load();
+    try{ imageCache = await idbGetAll(); }catch(e){ imageCache = {}; }
+    await migrateLegacyImages();
+    populateSimPlatformSelect();
+    renderAll();
+    updateSimResult();
+  }
+  init();
+
+})();
+</script>
+</body>
+</html>
