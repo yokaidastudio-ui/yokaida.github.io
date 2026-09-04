@@ -888,8 +888,12 @@
       <div class="field">
         <label>N° de suivi</label>
         <input type="text" id="sh-tracking">
-        <a href="#" id="sh-track-link" target="_blank" rel="noopener" style="display:none; font-size:12px; color:var(--accent-text); font-weight:600; text-decoration:underline; margin-top:4px;">Ouvrir le suivi du colis ↗</a>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+          <a href="#" id="sh-track-link" target="_blank" rel="noopener" style="display:none; font-size:12px; color:var(--accent-text); font-weight:600; text-decoration:underline;">Ouvrir le suivi du colis ↗</a>
+          <button type="button" id="sh-copy-btn" style="display:none; font-size:12px; color:var(--text-2); font-weight:600; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline;">Copier le numéro</button>
+        </div>
       </div>
+      <p class="field-hint" id="sh-vinted-hint" style="display:none; margin-top:-8px;">Vinted Go n'a pas de suivi préfilli automatiquement : copie le numéro, puis colle-le sur la page qui s'ouvre.</p>
       <div class="field-row">
         <div class="field"><label>Statut</label>
           <select id="sh-status">
@@ -1171,10 +1175,15 @@
     const map = {
       'Colissimo': `https://www.laposte.fr/outils/suivre-vos-envois?code=${t}`,
       'Lettre suivie': `https://www.laposte.fr/outils/suivre-vos-envois?code=${t}`,
-      'Mondial Relay': `https://www.mondialrelay.fr/suivi-de-colis?numeroExpedition=${t}`,
-      'Chronopost': `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${t}`
+      'Chronopost': `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${t}`,
+      // Mondial Relay exige un "codeMarque" propre à chaque vendeur en plus du n° de suivi :
+      // impossible à deviner, donc on ouvre leur page générique plutôt qu'un lien cassé.
+      'Mondial Relay': `https://www.mondialrelay.fr/suivi-de-colis/`,
+      // Vinted Go n'a pas de paramètre d'URL public pour préremplir le numéro : on ouvre sa page officielle,
+      // il suffit d'y coller le numéro (bouton "Copier" prévu à cet effet).
+      'Vinted Go': `https://vintedgo.com/fr/tracking`
     };
-    // Vinted Go et les transporteurs non reconnus : recherche directe, faute de suivi public standardisé
+    // Transporteurs non reconnus ("Autre") : recherche directe, faute de suivi public standardisé
     return map[carrier] || `https://www.google.com/search?q=${t}+suivi+colis`;
   }
   function escapeHtml(s){
@@ -1673,10 +1682,27 @@
     const carrier = document.getElementById('sh-carrier').value;
     const tracking = document.getElementById('sh-tracking').value;
     const link = document.getElementById('sh-track-link');
+    const copyBtn = document.getElementById('sh-copy-btn');
+    const hint = document.getElementById('sh-vinted-hint');
     const url = trackingUrlFor(carrier, tracking);
     if(url){ link.href = url; link.style.display = 'inline-block'; }
     else { link.style.display = 'none'; }
+    const needsCopy = (carrier === 'Vinted Go' || carrier === 'Mondial Relay') && tracking && tracking.trim();
+    copyBtn.style.display = needsCopy ? 'inline-block' : 'none';
+    hint.textContent = carrier === 'Mondial Relay'
+      ? "Mondial Relay demande aussi le code postal du destinataire : copie le numéro, puis colle-le sur leur page."
+      : "Vinted Go n'a pas de suivi préfilli automatiquement : copie le numéro, puis colle-le sur la page qui s'ouvre.";
+    hint.style.display = needsCopy ? 'block' : 'none';
   }
+  document.getElementById('sh-copy-btn').addEventListener('click', async ()=>{
+    const tracking = document.getElementById('sh-tracking').value.trim();
+    try{
+      await navigator.clipboard.writeText(tracking);
+      showToast("Numéro copié");
+    }catch(e){
+      showToast("Impossible de copier automatiquement, copie-le à la main");
+    }
+  });
   document.getElementById('sh-carrier').addEventListener('change', updateShipTrackLink);
   document.getElementById('sh-tracking').addEventListener('input', updateShipTrackLink);
 
