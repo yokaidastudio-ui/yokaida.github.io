@@ -2074,7 +2074,7 @@
     if(query || sortMode!=='date-desc'){
       // flat sorted/filtered list, no month grouping
       const sorted = sortItems(items, sortMode);
-      wrap.innerHTML = `<div class="panel" style="box-shadow:none; border:none; margin-bottom:0;">${sorted.map(stockRowHtml).join('')}</div>`;
+      wrap.innerHTML = `<div class="panel" style="box-shadow:none; border:none; margin-bottom:0;">${sorted.map(c=>stockRowHtml(c)).join('')}</div>`;
       wireStockRows(wrap);
       return;
     }
@@ -2095,7 +2095,7 @@
           <span class="month-total">${fmtEur(total)}<small>investis (frais inclus)</small></span>
         </div>
         <div class="month-table-wrap ${collapsed?'collapsed':''}" data-gid="${gid}">
-          ${sortItems(g.items,'date-desc').map(stockRowHtml).join('')}
+          ${sortItems(g.items,'date-desc').map(c=>stockRowHtml(c)).join('')}
         </div>
       </div>`;
     }).join('');
